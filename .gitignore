@@ -1,0 +1,13 @@
+# Ignoramos el entorno virtual de Python
+pythonEnvironment/
+
+# Ficheros de cache de Python
+__pycache__/
+*.pyc
+
+# Los .txt también
+*.txt
+
+# Los .mp4 y .mp3
+*.mp4
+*.mp3
