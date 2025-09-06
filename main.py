@@ -4,13 +4,9 @@
 import whisper
 
 # Modulo para poder trabajar con GUI (graphical user interface)
-import tkinter
 from tkinter import filedialog
 
-# Modulo para extraer audio del video
-import moviepy
-
-# Para poder trabajar con video
+# Modulo para poder trabajar con video
 from moviepy.editor import VideoFileClip, ImageClip, CompositeVideoClip
 
 # Para poder terminar el programa
@@ -19,43 +15,56 @@ import sys
 # Para borrar el archivo de audio
 import os
 
-# Para poder crear los TextClip sin tener el problema de ImageMagick
+# Librería pillow para el manejo y procesamiento de imágenes, se utiliza en lugar de
+# ImageMagick para mayor facilidad
 from PIL import Image, ImageDraw, ImageFont
 import numpy as np
 
-# Constante
+# ------ Constantes ------
 NOMBREAUDIO = "audioExtraido.mp3"
-FONT = 20
-
+FONTSIZE = 20
 
 def crearTextClip(palabra, duracion, color):
 
-    # Cargamos una fuente basica
+    # Cargamos una fuente con tamaño en especifico
     try:
-        font = ImageFont.truetype("Ubuntu-M.ttf", FONT)
+        font = ImageFont.truetype("Ubuntu-M.ttf", FONTSIZE)
+    # En caso de que esta no se haya podido cargar
     except Exception as e:
         print(
-            "La fuenta especificada no fue encontrada, se usara la fuente por defecto"
+            "La fuente especificada no fue encontrada, se usara la fuente por defecto "
+            + e
         )
         font = ImageFont.load_default()
 
-    # Crea un objeto de dibujo para medir el texto
-    draw_temp = ImageDraw.Draw(Image.new("RGBA", (1, 1)))
-    
+    # Creamos una imagen 1px x 1px solamente para después ver cuanto espacio ocupa en realidad el texto, RGB
+    # es simplemente el modo de color
+    imagenTemporal = ImageDraw.Draw(Image.new("RGBA", (1, 1)))
 
-    bbox = draw_temp.textbbox((0, 0), palabra, font=font)
-    text_width = bbox[2] - bbox[0]
-    text_height = bbox[3] - bbox[1]
+    # textbbox() calcula el tamaño que ocuparía el texto si este se dibujara. Este regresa una tupla de 4
+    # números representando las coordenadas (x0, y0, x1, y1) de la caja invisible que rodea a la palabra.
+    # El (0,0) es la coordenada de anclaje o el punto hipotético donde se empezaría a dibujar el texto
+    cajaTemporal = imagenTemporal.textbbox((0, 0), palabra, font)
+    # Calculamos el ancho
+    textAncho = cajaTemporal[2] - cajaTemporal[0]
+    # Calculamos la altura
+    textAltura = cajaTemporal[3] - cajaTemporal[1]
 
-    # Crea la imagen final con el tamaño correcto y un pequeño margen
-    img = Image.new('RGBA', (text_width + 10, text_height + 10), (0, 0, 0, 0))
+    # Crea la imagen final con el tamaño correcto y un pequeño margen (10), ademas de no tener ningún color de
+    # fondo (0,0,0,0)
+    img = Image.new("RGBA", (textAncho + 10, textAltura + 10), (0, 0, 0, 0))
+    # Hacemos un dibujo a partir de la imagen, de esta manera podemos dibujar sobre la imagen
     draw = ImageDraw.Draw(img)
-    draw.text((5, 5), palabra, font=font, fill=color)
-    
-    # Convierte la imagen de Pillow a un array de numpy y crea un ImageClip
-    np_image = np.array(img)
-    clip = ImageClip(np_image).set_duration(duracion)
-    
+    # A esa imagen por medio del draw le agregamos el texto con esa posición dentro de la imagen creada
+    draw.text((5, 5), palabra, font, color)
+
+    # Hacemos la conversion para poder usar la imagen de la librería Pillow y moviepy, dado que ambos conocen
+    # los array de numpy, asi que una imagen se puede representar como un array de numpy
+    imagenArray = np.array(img)
+    # A partir de este array hacemos un ImageClip a quien después le especificamos la duración que va a tener
+    clip = ImageClip(imagenArray).set_duration(duracion)
+
+    # Regresamos el TextClip
     return clip
 
 
@@ -109,20 +118,16 @@ if __name__ == "__main__":
                     f"Word: \"{word['word']}\" (Start: {word['start']:.2f}s, End: {word['end']:.2f}s)"
                 )
 
-                # Obtenemos la informacion sobre la palabra
+                # Obtenemos la information sobre la palabra
                 palabra = word["word"]
                 inicio = word["start"]
                 fin = word["end"]
                 duracion = fin - inicio
 
                 # Creamos el clip de texto a partir de la informacion
-                clipTexto = crearTextClip(
-                    palabra,
-                    duracion,
-                    "white"
-                )
+                clipTexto = crearTextClip(palabra, duracion, "white")
 
-                # Establecemos la posicion, inicio y duracion del clip
+                # Establecemos la posición, inicio y duración del clip
                 clipTexto = clipTexto.set_position("bottom")
                 clipTexto = clipTexto.set_start(inicio)
 
