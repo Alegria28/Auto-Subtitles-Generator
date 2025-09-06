@@ -1,12 +1,10 @@
-# Ignoramos el entorno virtual de Python
-pythonEnvironment/
+# Ignoramos solo el contenido de la carpeta
+carpetaCompartida/*
+!carpetaCompartida/
 
 # Ficheros de cache de Python
 __pycache__/
 *.pyc
-
-# Los .txt también
-*.txt
 
 # Los .mp4 y .mp3
 *.mp4
