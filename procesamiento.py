@@ -21,8 +21,8 @@ import time
 # ------ Constantes ------
 NOMBREAUDIO = "audioExtraido.mp3"
 FONTSIZE = 20
-NOMBREARCHIVO = "carpetaCompartida/pathVideo.txt"
-CARPETACOMPARTIDA = "carpetaCompartida"
+PATHARCHIVOTXT = "/carpetaCompartida/pathVideo.txt"
+CARPETACOMPARTIDA = "/carpetaCompartida"
 VIDEOSALIDA = os.path.join(CARPETACOMPARTIDA, "videoConSubtitulos.mp4")
 
 
@@ -59,8 +59,8 @@ def crearTextClip(palabra, duracion, color):
     img = Image.new("RGBA", (textAncho + 10, textAltura + 10), (0, 0, 0, 0))
     # Hacemos un dibujo a partir de la imagen, de esta manera podemos dibujar sobre la imagen
     draw = ImageDraw.Draw(img)
-    # A esa imagen por medio del draw le agregamos el texto con esa posición dentro de la imagen creada
-    draw.text((5, 5), palabra, font, color)
+    # A esa imagen por medio del draw le agregamos el texto con esa posición dentro de la imagen creada (especificamos el parámetro que le estamos pasando)
+    draw.text(xy=(5, 5), text=palabra, font=font, fill=color)
 
     # Hacemos la conversion para poder usar la imagen de la librería Pillow y moviepy, dado que ambos conocen
     # los array de numpy, asi que una imagen se puede representar como un array de numpy
@@ -72,16 +72,27 @@ def crearTextClip(palabra, duracion, color):
     return clip
 
 
+# Entrada principal al programa
 if __name__ == "__main__":
 
-    # Leemos la ruta en donde se encuentra el video a partir del .txt
-    with open(NOMBREARCHIVO, "r") as f:
-        pathVideo = f.read().strip()
+    # Leemos el archivo .txt de la carpeta compartida para obtener el nombre del video
+    with open(PATHARCHIVOTXT, "r") as f:
+        pathVideoRelativo = f.read().strip()
+
+    # Creamos la ruta del video, juntando el nombre de la carpeta compartida y el nombre del video
+    pathVideo = os.path.join(CARPETACOMPARTIDA, os.path.basename(pathVideoRelativo))
+
+    print("🎥 Cargando video")
 
     # Cargamos el video
     video = VideoFileClip(pathVideo)
+
+    print("🔊 Extrayendo audio")
+
     # Le sacamos el audio
     audio = video.audio
+
+    print("🔊 Creando .mp3")
 
     # Creamos el audio
     audio.write_audiofile(NOMBREAUDIO, codec="mp3")
@@ -96,15 +107,14 @@ if __name__ == "__main__":
         print("⚠️ No se detectó GPU: Esta utilizara el CPU en su lugar")
 
     # Mostramos mensaje y después esperamos antes de realizar la transcripcion
-    print(" Generando transcripcion")
-    time.sleep(3)
+    print("📝 Generando transcripcion")
 
     # Obtenemos la transcripcion
     resultado = model.transcribe(
         "audioExtraido.mp3", word_timestamps=True  # Tiempo para cada palabra
     )
 
-    print("Transcripcion terminada")
+    print("📝 Transcripcion terminada")
 
     # Borramos el audio creado ya que ya no sera utilizado
     os.remove(NOMBREAUDIO)
@@ -121,7 +131,7 @@ if __name__ == "__main__":
                 )
 
                 # Obtenemos la information sobre la palabra
-                palabra = word["word"]
+                palabra = word["word"].strip() # Quitamos los espacios en blanco de la palabra
                 inicio = word["start"]
                 fin = word["end"]
                 duracion = fin - inicio
@@ -141,3 +151,5 @@ if __name__ == "__main__":
 
     # Creamos el video, especificando la ruta de la carpeta compartida
     videoFinal.write_videofile(VIDEOSALIDA, codec="libx264")
+
+    print("🎥 Video generado")
