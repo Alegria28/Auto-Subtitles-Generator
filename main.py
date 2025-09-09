@@ -2,6 +2,7 @@
 
 # Modulo para poder trabajar con GUI (graphical user interface)
 from tkinter import filedialog
+from tkinter import *  # Importamos todo lo necesario
 
 # Para poder terminar el programa
 import sys
@@ -9,11 +10,29 @@ import sys
 # Para poder trabajar con las carpetas
 import os
 
-#
+# Para poder copiar archivos
 import shutil
 
+# Constantes
 NOMBRECARPETA = "carpetaCompartida"
 NOMBREARCHIVO = os.path.join(NOMBRECARPETA, "pathVideo.txt")
+ANCHOVENTANA = 1000
+ALTURAVENTANA = 900
+
+
+def centrarPantalla(root):
+
+    # Obtenemos el ancho y altura de la pantalla
+    anchoPantalla = root.winfo_screenwidth()
+    alturaPantalla = root.winfo_screenheight()
+
+    # Calculamos la posicion para la ventana
+    x = (anchoPantalla - ANCHOVENTANA) // 2  # Valor redondeado
+    y = (alturaPantalla - ALTURAVENTANA) // 2
+
+    # Establecemos la posicion de la ventana
+    root.geometry(f"{ANCHOVENTANA}x{ALTURAVENTANA}+{x}+{y}")
+
 
 # Punto de entrada al proyecto (dado que este programa se corre directamente y no es importado como modulo)
 if __name__ == "__main__":
@@ -51,3 +70,15 @@ if __name__ == "__main__":
 
     else:
         sys.exit("⚠️ No se pudo obtener el nombre del video")
+
+    # Creamos nuestra ventana
+    root = Tk()
+
+    # Le cambiamos el nombre a nuestra ventana
+    root.title("Dashboard")
+
+    # LLamamos a la funcion para centrar nuestra ventana
+    centrarPantalla(root=root)
+
+    # Iniciamos el loop principal de la ventana
+    root.mainloop()
