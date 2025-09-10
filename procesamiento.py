@@ -13,12 +13,13 @@ from PIL import Image, ImageDraw, ImageFont
 import numpy as np
 
 # ------ Constantes ------
-NOMBREAUDIO = "audioExtraido.mp3"
-FONTSIZE = 20
-PATHARCHIVOTXT = "/carpetaCompartida/pathVideo.txt"
-CARPETACOMPARTIDA = "/carpetaCompartida"
-VIDEOSALIDA = os.path.join(CARPETACOMPARTIDA, "videoConSubtitulos.mp4")
+NOMBRE_CARPETA_COMPARTIDA = "/autoSubtitlesGenerator/carpetaCompartida"
+NOMBRE_TXT_VIDEO = "pathVideo.txt"
+NOMBRE_TXT_AUDIO = "pathAudio.txt"
 
+PATH_VIDEO_SALIDA = os.path.join(NOMBRE_CARPETA_COMPARTIDA, "videoConSubtitulos.mp4")
+
+FONTSIZE = 40
 
 def crearTextClip(palabra, duracion, color):
 
@@ -70,42 +71,39 @@ def crearTextClip(palabra, duracion, color):
 if __name__ == "__main__":
 
     # Leemos el archivo .txt de la carpeta compartida para obtener el nombre del video
-    with open(PATHARCHIVOTXT, "r") as f:
-        pathVideoRelativo = f.read().strip()
+    with open(os.path.join(NOMBRE_CARPETA_COMPARTIDA, NOMBRE_TXT_VIDEO), "r") as f:
+        pathVideoEnCarpeta = f.read().strip()
 
     # Creamos la ruta del video, juntando el nombre de la carpeta compartida y el nombre del video
-    pathVideo = os.path.join(CARPETACOMPARTIDA, os.path.basename(pathVideoRelativo))
+    pathVideo = os.path.join(
+        NOMBRE_CARPETA_COMPARTIDA, os.path.basename(pathVideoEnCarpeta)
+    )
 
     print("🎥 Cargando video")
 
     # Cargamos el video
     video = VideoFileClip(pathVideo)
 
-    print("🔊 Extrayendo audio")
-
-    # Le sacamos el audio
-    audio = video.audio
-
-    print("🔊 Creando .mp3")
-
-    # Creamos el audio
-    audio.write_audiofile(NOMBREAUDIO, codec="mp3")
+    print("🧠 Cargando modelo IA")
 
     # Especificamos el modelo de Whisper
-    model = whisper.load_model("large-v3")
+    # model = whisper.load_model("large-v3")
+    model = whisper.load_model("tiny")
 
-    # Mostramos mensaje y después esperamos antes de realizar la transcripcion
-    print("📝 Generando transcripcion")
+    # Mostramos mensaje y después esperamos antes de realizar la transcripción
+    print("📝 Generando transcripción")
 
-    # Obtenemos la transcripcion
+    # Leemos el archivo .txt de la carpeta compartida para obtener el nombre del video
+    with open(os.path.join(NOMBRE_CARPETA_COMPARTIDA, NOMBRE_TXT_AUDIO), "r") as f:
+        pathAudioEnCarpeta = f.read().strip()
+
+    # Obtenemos la transcripción, utilizando el audio que esta en la carpeta compartida
     resultado = model.transcribe(
-        "audioExtraido.mp3", word_timestamps=True  # Tiempo para cada palabra
+        pathAudioEnCarpeta,
+        word_timestamps=True,  # Tiempo para cada palabra
     )
 
-    print("📝 Transcripcion terminada")
-
-    # Borramos el audio creado ya que ya no sera utilizado
-    os.remove(NOMBREAUDIO)
+    print("📝 Generando text clips")
 
     # Lista que va a guardar los clip de textos del subtitulo
     subtitulos = []
@@ -119,13 +117,17 @@ if __name__ == "__main__":
                 )
 
                 # Obtenemos la information sobre la palabra
-                palabra = word["word"].strip() # Quitamos los espacios en blanco de la palabra
+                palabra = word[
+                    "word"
+                ].strip()  # Quitamos los espacios en blanco de la palabra
                 inicio = word["start"]
                 fin = word["end"]
                 duracion = fin - inicio
 
-                # Creamos el clip de texto a partir de la informacion 
-                clipTexto = crearTextClip(palabra, duracion, (255, 255, 255)) # Color blanco
+                # Creamos el clip de texto a partir de la información
+                clipTexto = crearTextClip(
+                    palabra, duracion, (255, 255, 255)
+                )  # Color blanco
 
                 # Establecemos la posición, inicio y duración del clip
                 clipTexto = clipTexto.set_position("bottom")
@@ -138,6 +140,6 @@ if __name__ == "__main__":
     videoFinal = CompositeVideoClip([video] + subtitulos)
 
     # Creamos el video, especificando la ruta de la carpeta compartida
-    videoFinal.write_videofile(VIDEOSALIDA, codec="libx264")
+    videoFinal.write_videofile(PATH_VIDEO_SALIDA, codec="libx264")
 
     print("🎥 Video generado")

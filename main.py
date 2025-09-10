@@ -1,23 +1,31 @@
 # Información sobre los módulos: https://shorturl.at/slHUh
 
 # Importamos los módulos
-import tkinter # Para trabajar con UI
-import tkvideoaudio # Para poder reproducir el sonido del video
-import pygame # Sirve como motor de audio para el modulo pygame
+import tkinter  # Para trabajar con UI
+import tkvideoaudio  # Para poder reproducir el sonido del video
+import pygame  # Sirve como motor de audio para el modulo pygame
 
 # Del modulo tkinter, importamos la clase
 from tkinter import filedialog
+
 # Del modulo moviepy en el sub-modulo editor, importamos la clase
 from moviepy.editor import VideoFileClip
 
 # Módulos de la biblioteca estándar
-import sys # Para poder salir del programa
-import os # Para trabajar con rutas
-import shutil # Para copiar archivos
+import sys  # Para poder salir del programa
+import os  # Para trabajar con rutas
+import shutil  # Para copiar archivos
 
 # Constantes
-NOMBRECARPETA = "carpetaCompartida"
-NOMBREARCHIVO = os.path.join(NOMBRECARPETA, "pathVideo.txt")
+NOMBRE_CARPETA = "carpetaCompartida"
+NOMBRE_TXT_VIDEO = "pathVideo.txt"
+NOMBRE_TXT_AUDIO = "pathAudio.txt"
+
+PATH_ACTUAL = os.getcwd()  # Directorio actual de trabajo
+PATH_CARPETA_COMPARTIDA = os.path.join(PATH_ACTUAL, "carpetaCompartida")
+PATH_TXT_VIDEO = os.path.join(PATH_ACTUAL, "pathVideo.txt")
+PATH_TXT_AUDIO = os.path.join(PATH_CARPETA_COMPARTIDA, "pathAudio.txt")
+
 ANCHOVENTANA = 1000
 ALTURAVENTANA = 900
 
@@ -39,6 +47,8 @@ def centrarPantalla(root):
 # Punto de entrada al proyecto (dado que este programa se corre directamente y no es importado como modulo)
 if __name__ == "__main__":
 
+    os.system("clear")
+
     # Al iniciar el programa abrimos el explorador de archivos para obtener el nombre del video con que trabajar
     # (filedialog es un sub-modulo de tkinter)
     pathVideoHost = filedialog.askopenfilename(
@@ -53,25 +63,18 @@ if __name__ == "__main__":
 
         # Se crea la carpeta compartida entre el host y el contenedor si este no existe
         os.makedirs(
-            name=NOMBRECARPETA, exist_ok=True
+            name=NOMBRE_CARPETA, exist_ok=True
         )  # En caso de que ya exista, se ignora el error
 
-        # Creamos la ruta relativa para esta carpeta NOMBRECARPETA/pathVideo (solo nombre del video, el basename)
-        pathCarpetaCompartidaConVideo = os.path.join(
-            NOMBRECARPETA, os.path.basename(pathVideoHost)
-        )
-        print(f"📂 Ruta creada para video: {pathCarpetaCompartidaConVideo}\n")
-
         # Copiamos el video a la carpeta compartida
-        shutil.copy(src=pathVideoHost, dst=pathCarpetaCompartidaConVideo)
+        shutil.copy(src=pathVideoHost, dst=PATH_CARPETA_COMPARTIDA)
 
-        print(f"📂 Ruta creada para .txt: {NOMBREARCHIVO}\n")
-
-        # Creamos un archivo .txt (cuya ruta esta en la carpeta compartida) donde escribimos la ruta que creamos para la carpeta compartida
-        with open(file=NOMBREARCHIVO, mode="w") as f:
-            f.write(pathCarpetaCompartidaConVideo)
+        # Dentro de la carpeta compartida escribimos en un .txt la ruta del video, ya que sera leído por el contenedor
+        with open(file=os.path.join(NOMBRE_CARPETA, NOMBRE_TXT_VIDEO), mode="w") as f:
+            f.write(os.path.join(NOMBRE_CARPETA, os.path.basename(pathVideoHost)))
 
     else:
+        # Se cierra la aplicación si no se pudo encontrar el video
         sys.exit("⚠️ No se pudo obtener el nombre del video")
 
     # Creamos nuestra ventana
@@ -88,12 +91,11 @@ if __name__ == "__main__":
 
     """Geometry manager Pack.
     Base class to use the methods pack_* in every widget."""
-    label.pack()
+    # El label lo ponemos en el "button" de la ventana, con un padding de 10px
+    label.pack(side="bottom", padx=10, pady=10)
 
     # Declaramos nuestro reproductor (accedemos a la clase tkvideo del modulo)
-    reproductor = tkvideoaudio.tkvideo(
-        path=pathVideoHost, label=label, size=(640, 360)
-    )
+    reproductor = tkvideoaudio.tkvideo(path=pathVideoHost, label=label, size=(640, 360))
 
     # Obtenemos el nombre del video
     nombre_base = os.path.basename(p=pathVideoHost)
@@ -102,7 +104,6 @@ if __name__ == "__main__":
     nombre_sin_extension, _ = os.path.splitext(p=nombre_base)
     # Al nombre del video, le agregamos la extension correspondiente
     nombreAudio = nombre_sin_extension + ".mp3"
-    print(f"🔊 Nombre del audio generado: {nombreAudio}\n")
 
     # Cargamos el video utilizando el constructor de la clase
     video = VideoFileClip(filename=pathVideoHost, audio=True)
@@ -112,11 +113,24 @@ if __name__ == "__main__":
     # Creamos el audio
     audio.write_audiofile(os.path.basename(nombreAudio), codec="mp3")
 
+    # Creamos la ruta en donde esta el audio que acabamos de crear
+    pathAudioCreado = os.path.join(PATH_ACTUAL, nombreAudio)
+
+    # Copiamos el audio a la carpeta compartida
+    shutil.copy(src=pathAudioCreado, dst=PATH_CARPETA_COMPARTIDA)
+
+    # Dentro de la carpeta compartida escribimos en un .txt la ruta del audio, ya que sera leído por el contenedor
+    with open(file=os.path.join(NOMBRE_CARPETA, NOMBRE_TXT_AUDIO), mode="w") as f:
+        f.write(os.path.join(NOMBRE_CARPETA, os.path.basename(pathAudioCreado)))
+
     # Reproducimos el video (se escucha con audio gracias a que utiliza pygame)
     reproductor.play()
 
     # Iniciamos el loop principal de la ventana
     root.mainloop()
 
-    # Limpiamos módulos de pygame que se iniciaron 
+    # Borramos el .mp3 creado
+    os.remove(nombreAudio)
+
+    # Limpiamos módulos de pygame que se iniciaron
     pygame.quit()
