@@ -12,7 +12,6 @@ RUN apt install fonts-dejavu -y
 
 # Instalamos las librerías necesarias de python
 RUN pip install --no-cache-dir \
-    torch \
     openai-whisper \ 
     moviepy==1.0.3 \
     pillow 

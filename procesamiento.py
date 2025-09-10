@@ -1,4 +1,4 @@
-# Modulo de OpenAi para la transcripcion del video
+# Modulo de OpenAi para la transcripción del video
 import whisper
 
 # Modulo para poder trabajar con video
@@ -11,9 +11,6 @@ import os
 # ImageMagick para mayor facilidad
 from PIL import Image, ImageDraw, ImageFont
 import numpy as np
-
-# Para ver si hay una GPU disponible
-import torch
 
 # ------ Constantes ------
 NOMBREAUDIO = "audioExtraido.mp3"
@@ -96,12 +93,6 @@ if __name__ == "__main__":
 
     # Especificamos el modelo de Whisper
     model = whisper.load_model("large-v3")
-
-    # Verificamos si se está usando GPU o CPU
-    if torch.cuda.is_available():
-        print("✅ GPU detectada: Esta se utilizara para el procesamiento")
-    else:
-        print("⚠️ No se detectó GPU: Esta utilizara el CPU en su lugar")
 
     # Mostramos mensaje y después esperamos antes de realizar la transcripcion
     print("📝 Generando transcripcion")
