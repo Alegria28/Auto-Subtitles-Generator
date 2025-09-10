@@ -15,9 +15,6 @@ import numpy as np
 # Para ver si hay una GPU disponible
 import torch
 
-# Para utilizar el sleep
-import time
-
 # ------ Constantes ------
 NOMBREAUDIO = "audioExtraido.mp3"
 FONTSIZE = 20

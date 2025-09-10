@@ -1,4 +1,7 @@
-# Ignoramos solo el contenido de la carpeta
+# Ignoramos el entorno virtual
+pythonEnvironment/
+
+# Solo el contenido de la carpeta
 carpetaCompartida/*
 !carpetaCompartida/
 
@@ -9,3 +12,4 @@ __pycache__/
 # Los .mp4 y .mp3
 *.mp4
 *.mp3
+*.mov
