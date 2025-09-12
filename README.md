@@ -21,38 +21,22 @@ Antes de ejecutar el script local (`main.py`), asegúrate de tener instaladas la
 
 ## Configuración del Entorno Local
 
-Para ejecutar el script `main.py` y mantener las dependencias del proyecto aisladas, se recomienda encarecidamente utilizar un entorno virtual.
+Para configurar el entorno y las dependencias del proyecto, se ha proporcionado un script de instalación automatizado.
 
-### 1. Crear y Activar el Entorno Virtual
+### Instalación Automática (Linux/macOS)
 
-Si no tienes un entorno virtual, puedes crearlo con el siguiente comando en la raíz del proyecto:
+Para usuarios de Linux y macOS, simplemente ejecuta el siguiente comando desde la raíz del proyecto. Este script creará un entorno virtual, lo activará e instalará todas las librerías necesarias.
 
-```bash
-python3 -m venv pythonEnvironment
-```
-
-Luego, actívalo:
-
-*   **En Linux/macOS:**
-    ```bash
-    source pythonEnvironment/bin/activate
-    ```
-*   **En Windows (PowerShell):**
-    ```bash
-    .\pythonEnvironment\Scripts\activate
-    ```
-
-Sabrás que está activado porque el nombre del entorno (`pythonEnvironment`) aparecerá al inicio de la línea de tu terminal.
-
-### 2. Instalar Dependencias
-
-Con el entorno virtual activado, instala todas las librerías necesarias ejecutando:
+**Importante:** Debes ejecutar el script usando el comando `source` para que el entorno virtual se active correctamente en tu terminal.
 
 ```bash
-pip install -r requerimientosEntornoVirtual.txt
+source setup.sh
 ```
 
-Este comando leerá el archivo `requerimientosEntornoVirtual.txt` e instalará las versiones correctas de `moviepy`, `pillow` y otras dependencias necesarias.
+> **¿Por qué `source`?**
+> Es crucial usar `source setup.sh` (o su atajo `. setup.sh`) en lugar de `./setup.sh`. Al usar `source`, el script modifica tu sesión de terminal actual, activando el entorno virtual en ella. Si lo ejecutas como `./setup.sh`, el entorno solo se activará en un proceso temporal que se cierra al terminar el script, y no tendrá efecto en tu terminal.
+
+Una vez ejecutado, verás que el nombre del entorno (`venv`) aparece al inicio de la línea de tu terminal, indicando que está activo y listo para usarse.
 
 ## Pasos para Generar un Video
 
