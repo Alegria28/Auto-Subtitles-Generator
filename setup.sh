@@ -19,4 +19,14 @@ echo "📥 Instalando módulos necesarios"
 pip install --upgrade pip
 pip install -r requirements.txt
 
+# Instalamos paquetes necesarios
+echo "📥 Instalando paquetes necesarios" 
+if ! command -v vlc &> /dev/null
+then
+    echo "vlc no encontrado, instalando..."
+    sudo apt install vlc -y
+else
+    echo "vlc ya está instalado."
+fi
+
 echo "✅ Sistema listo"

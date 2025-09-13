@@ -18,7 +18,7 @@ import sys  # Para poder salir del programa
 import os  # Para trabajar con rutas
 import shutil  # Para copiar archivos
 
-# Constantes
+# --- Constantes ---
 NOMBRE_CARPETA = "carpetaCompartida"
 NOMBRE_TXT_VIDEO = "pathVideo.txt"
 NOMBRE_TXT_AUDIO = "pathAudio.txt"
@@ -49,6 +49,7 @@ def centrarPantalla(root):
 # Punto de entrada al proyecto (dado que este programa se corre directamente y no es importado como modulo)
 if __name__ == "__main__":
 
+    # Limpiamos la terminal
     os.system("clear")
 
     # Al iniciar el programa abrimos el explorador de archivos para obtener el nombre del video con que trabajar
@@ -91,7 +92,7 @@ if __name__ == "__main__":
     # ---- Estructura de la interfaz ----
 
     # Frame para los controles (derecha)
-    controls_frame = tkinter.Frame(root, width=300, bg="lightgrey")
+    controls_frame = tkinter.Frame(root, width=300, background="lightgrey")
     controls_frame.pack(side=tkinter.RIGHT, fill=tkinter.Y)
     controls_frame.pack_propagate(False)  # Para que no cambie de tamaño el frame
 
@@ -101,16 +102,18 @@ if __name__ == "__main__":
 
     # ---- Lógica VLC ----
 
-    # Creamos una instancia de VLC y del reproductor
+    # Creamos una instancia de VLC
     instance = vlc.Instance(
-        "--avcodec-hw=none --quiet"
-    )  # Desactivamos la aceleracion por hardware para evitar errores de "deadlock"
+        "--quiet"
+    )  # Para que no se vean los errores de VLC en la terminal
+    # Creamos un reproductor
     reproductor = instance.media_player_new()
 
     # Variables de control
     isSliderActive = False
 
     # ---- Funciones de control del reproductor ----
+
     def pausar():
         reproductor.pause()
 
@@ -118,8 +121,11 @@ if __name__ == "__main__":
         reproductor.audio_set_volume(int(volumen))
 
     def setPosition(posicion):
+        # Si el reproductor tiene un video cargado
         if reproductor.get_media():
+            # Convertimos el valor de entrada (que esta entre 0 y 1000) a un valor entre 0 y 1
             pos = int(posicion) / 1000.0
+            # Establecemos la posicion
             reproductor.set_position(pos)
             # Si no se está reproduciendo, le damos a play
             if not reproductor.is_playing():
@@ -127,36 +133,51 @@ if __name__ == "__main__":
                 # Aseguramos que el botón muestre "Pausa"
                 pause_button.config(text="Pausa")
 
-    def actualizar_slider():
+    def actualizarSlider():
+        # Si el usuario no esta arrastrando el slider
         if not isSliderActive:
-            is_playing = reproductor.is_playing()
-            pause_button.config(text="Reproducir" if not is_playing else "Pausa")
+            # Obtenemos el estado del video, para ver si se esta reproduciendo
+            isPlaying = reproductor.is_playing()
+            # Si no se esta reproduciendo, entonces el boton va a decir pausa
+            pause_button.config(text="Reproducir" if not isPlaying else "Pausa")
 
-            if is_playing:
+            # Si se esta reproduciendo
+            if isPlaying:
+                # Obtenemos la posición en el video (obtenemos un valor entre 0 y 1)
                 posicion_actual = reproductor.get_position()
+                # Si el video ya termino, lo reiniciamos llamando a nuestra función
                 if posicion_actual > 0.99:
-                    # Cuando el video termina, lo reinicia llamando a setPosition(0)
                     setPosition(0)
+                # Si se sigue reproduciendo entonces actualizamos el slider
                 else:
                     position_slider.set(int(posicion_actual * 1000))
 
-        root.after(200, actualizar_slider)
+        # Programamos a la ventana para que se ejecute la función cada 200ms
+        root.after(200, actualizarSlider)
 
     def on_slider_press(event):
-        global isSliderActive
+        # Cuando el usuario hace click en el slider, cambiamos la bandera para que la función
+        # actualizarSlider no actualice el slider
+        global isSliderActive  # Accedemos a la bandera anteriormente declarada
         isSliderActive = True
 
     def on_slider_release(event):
         global isSliderActive
         isSliderActive = False
+        # Cambiamos la posición del video al mandarle la posición en la que se dejo el slider
         setPosition(position_slider.get())
 
     def elegirColor():
+        # Abrimos una ventana para que el usuario pueda elegir un color, codigoColor
+        # va a ser una tupla que tiene la representación RGB y hexadecimal del color
         codigoColor = colorchooser.askcolor(title="Elige un color")
 
+        # Si se selecciono un color
         if codigoColor:
+            # Obtenemos el color hexadecimal elegido
             colorVariable.set(codigoColor[1])
-            color_display.config(bg=codigoColor[1])
+            # Cambiamos el color seleccionado en GUI
+            color_display.config(background=codigoColor[1])
 
     def generate_subtitles():
         print("--- GENERANDO SUBTÍTULOS CON LAS SIGUIENTES OPCIONES ---")
@@ -169,56 +190,71 @@ if __name__ == "__main__":
 
     # --- Widgets de control ---
 
+    # Se crea un contenedor que dibuja un borde al rededor, el cual estará dentro del controls_frame
     playback_lf = tkinter.LabelFrame(
         controls_frame, text="Reproducción", padx=10, pady=10, bg="lightgrey"
     )
+    # Se posiciona este LabelFrame dentro de su contenedor (controls_frame)
     playback_lf.pack(pady=10, padx=10, fill=tkinter.X)
 
+    # Se crea un button especificándole que va a estar dentro del LabelFrame antes creado
     pause_button = tkinter.Button(playback_lf, text="Pausa", command=pausar)
+    # Se posiciona dentro del contenedor (playback_lf)
     pause_button.pack(fill=tkinter.X)
 
+    # Creamos un slider
     position_slider = tkinter.Scale(
-        playback_lf,
+        playback_lf,  # Especificando que va a estar dentro del LabelFrame antes creado
         from_=0,
         to=1000,
         orient=tkinter.HORIZONTAL,
-        showvalue=0,
+        showvalue=0,  # No se va a mostrar el valor numero del slider
         bg="lightgrey",
         highlightthickness=0,
     )
+
+    # Se posiciona dentro del contenedor
     position_slider.pack(fill=tkinter.X, pady=(5, 0))
+    # Asociamos los eventos del raton con las funciones antes creadas
     position_slider.bind("<ButtonPress-1>", on_slider_press)
     position_slider.bind("<ButtonRelease-1>", on_slider_release)
 
+    # Creamos otro slider
     volume_slider = tkinter.Scale(
         playback_lf,
         from_=0,
         to=100,
         orient=tkinter.HORIZONTAL,
-        command=cambiarVolumen,
+        command=cambiarVolumen,  # Le decimos que función va a ejecutar cuando el slider se utiliza
         bg="lightgrey",
         highlightthickness=0,
         label="Volumen",
     )
+    # Inicia el valor en 50
     volume_slider.set(50)
+    # Se posiciona dentro del contenedor
     volume_slider.pack(fill=tkinter.X, pady=(5, 0))
 
-    # --- Variables y widgets de subtitulos
+    # --- Variables y widgets de subtítulos
 
     fontVariable = tkinter.StringVar(root, "Arial")
     sizeVariable = tkinter.IntVar(root, 30)
     positionVariable = tkinter.StringVar(root, "Abajo")
     colorVariable = tkinter.StringVar(root, "#FFFFFF")
 
-    # Sección de opciones de subtítulos
+    # Creamos otra sección de opciones de subtítulos dentro del frame de controles
     subs_lf = tkinter.LabelFrame(
         controls_frame, text="Opciones de Subtítulos", padx=10, pady=10, bg="lightgrey"
     )
+    # Lo posicionamos en el contenedor
     subs_lf.pack(pady=10, padx=10, fill=tkinter.X)
 
     # Fuente
     tkinter.Label(subs_lf, text="Fuente:", bg="lightgrey").pack(anchor="w")
+    # Lista de python con las fuentes disponibles
     fonts = ["Arial", "Courier New", "Times New Roman", "Verdana"]
+    # Se crea un menu dentro de la nueva sección, vinculando la variable fontVariable y desempaquetando
+    # la lista al momento de pasarlo como parámetro
     font_menu = tkinter.OptionMenu(subs_lf, fontVariable, *fonts)
     font_menu.pack(fill=tkinter.X)
 
@@ -226,17 +262,25 @@ if __name__ == "__main__":
     tkinter.Label(subs_lf, text="Tamaño:", bg="lightgrey").pack(
         anchor="w", pady=(10, 0)
     )
+    # Creamos un SpinBox que es un campo de entrada de números con flechas, diciéndole que va a estar dentro
+    # de la sección, con un rango de valores y vinculando el valor con la variable anteriormente creada
     size_spinbox = tkinter.Spinbox(subs_lf, from_=10, to=100, textvariable=sizeVariable)
     size_spinbox.pack(fill=tkinter.X)
 
     # Color
     tkinter.Label(subs_lf, text="Color:", bg="lightgrey").pack(anchor="w", pady=(10, 0))
+    # Un pequeño frame para acomodar los widgets del color
     color_frame = tkinter.Frame(subs_lf, bg="lightgrey")
     color_frame.pack(fill=tkinter.X)
+    # Se crea un botón que va a ejecutar la función antes declarada elegirColor
     color_button = tkinter.Button(color_frame, text="Seleccionar", command=elegirColor)
     color_button.pack(side=tkinter.LEFT, expand=True, fill=tkinter.X, padx=(0, 5))
+    # Este funcionara como un cuadrito parala vista previa del color
     color_display = tkinter.Label(
-        color_frame, bg=colorVariable.get(), width=4, relief="sunken"
+        color_frame,
+        bg=colorVariable.get(),  # Utilizamos su color de fondo como cuadrito de la vista previa
+        width=4,
+        relief="sunken",  # Estilo pra que parezca un recuadro
     )
     color_display.pack(side=tkinter.RIGHT)
 
@@ -244,12 +288,15 @@ if __name__ == "__main__":
     tkinter.Label(subs_lf, text="Posición:", bg="lightgrey").pack(
         anchor="w", pady=(10, 0)
     )
+    # Lista de python para almacenar las opciones
     positions = ["Abajo", "Medio", "Arriba"]
+    # Recorremos la lista
     for pos in positions:
+        # Se crea un radio button para cada una de las opciones
         rb = tkinter.Radiobutton(
             subs_lf,
-            text=pos,
-            variable=positionVariable,
+            text=pos, # El texto que esta en la lista
+            variable=positionVariable, # Se asocia con la variable antes creada
             value=pos,
             bg="lightgrey",
             activebackground="lightgrey",
@@ -319,7 +366,7 @@ if __name__ == "__main__":
         # Actualizamos nuestra variable y llamamos a nuestra funcion
         global isPlaying
         isPlaying = True
-        actualizar_slider()
+        actualizarSlider()
 
     # Para asegurarnos que la ventana este lista antes de reproducir, le mandamos el objeto de
     # reproducirVideo para que este pueda ejecutarlo mas tarde (1ms mas tarde) cuando se inicie el main loop
