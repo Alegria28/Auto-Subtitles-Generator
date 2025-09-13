@@ -2,8 +2,7 @@
 
 # Importamos los módulos
 import tkinter  # Para trabajar con UI
-import tkvideoaudio  # Para poder reproducir el sonido del video
-import pygame  # Sirve como motor de audio para el modulo pygame
+import vlc  # Para reproducir el video
 
 # Del modulo tkinter, importamos la clase
 from tkinter import filedialog
@@ -79,23 +78,19 @@ if __name__ == "__main__":
 
     # Creamos nuestra ventana
     root = tkinter.Tk()
-
     # Le cambiamos el nombre a nuestra ventana
     root.title("Dashboard")
-
     # LLamamos a la función para centrar nuestra ventana
     centrarPantalla(root=root)
 
-    """Label widget which can display text and bitmaps."""
-    label = tkinter.Label(root)
+    # Creamos un frame a partir de la ventana para que este nos sirva como
+    # salida de video
+    frame = tkinter.Frame(root, background="black")
+    frame.pack(fill=tkinter.BOTH, expand=1)
 
-    """Geometry manager Pack.
-    Base class to use the methods pack_* in every widget."""
-    # El label lo ponemos en el "button" de la ventana, con un padding de 10px
-    label.pack(side="bottom", padx=10, pady=10)
-
-    # Declaramos nuestro reproductor (accedemos a la clase tkvideo del modulo)
-    reproductor = tkvideoaudio.tkvideo(path=pathVideoHost, label=label, size=(640, 360))
+    # Creamos una instancia de VLC y del reproductor
+    instance = vlc.Instance()
+    reproductor = instance.media_player_new()
 
     # Obtenemos el nombre del video
     nombre_base = os.path.basename(p=pathVideoHost)
@@ -107,6 +102,11 @@ if __name__ == "__main__":
 
     # Cargamos el video utilizando el constructor de la clase
     video = VideoFileClip(filename=pathVideoHost, audio=True)
+
+    # Cargamos el video para el reproductor
+    videoReproductor = instance.media_new(pathVideoHost)
+    # Le cargamos el video al reproductor
+    reproductor.set_media(videoReproductor)
 
     # Extraemos el audio
     audio = video.audio
@@ -123,14 +123,25 @@ if __name__ == "__main__":
     with open(file=os.path.join(NOMBRE_CARPETA, NOMBRE_TXT_AUDIO), mode="w") as f:
         f.write(os.path.join(NOMBRE_CARPETA, os.path.basename(pathAudioCreado)))
 
-    # Reproducimos el video (se escucha con audio gracias a que utiliza pygame)
-    reproductor.play()
+    def reproducirVideo():
+        # Identificamos que sistema de gestión de ventanas se esta usando
+
+        # Para Linux
+        if sys.platform.startswith("linux"):
+            reproductor.set_xwindow(frame.winfo_id())
+        # Para windows
+        elif sys.platform.startswith("win32"):
+            reproductor.set_hwnd(frame.winfo_id())
+
+        # Reproducimos el video (se escucha con audio gracias a que utiliza vlc)
+        reproductor.play()
+
+    # Para asegurarnos que la ventana este lista antes de reproducir, le mandamos el objeto de 
+    # reproducirVideo para que este pueda ejecutarlo mas tarde (1ms mas tarde) cuando se inicie el main loop
+    root.after(1, reproducirVideo)
 
     # Iniciamos el loop principal de la ventana
     root.mainloop()
 
     # Borramos el .mp3 creado
     os.remove(nombreAudio)
-
-    # Limpiamos módulos de pygame que se iniciaron
-    pygame.quit()
