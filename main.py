@@ -1,11 +1,12 @@
 # Información sobre los módulos: https://shorturl.at/slHUh
 
 # Importamos los módulos
-import tkinter  # Para trabajar con UI
+import tkinter # Para trabajar con UI
 import vlc  # Para reproducir el video
 
 # Del modulo tkinter, importamos la clase
 from tkinter import filedialog
+from tkinter import colorchooser 
 
 # Del modulo moviepy en el sub-modulo editor, importamos la clase
 from moviepy.editor import VideoFileClip
@@ -25,7 +26,7 @@ PATH_CARPETA_COMPARTIDA = os.path.join(PATH_ACTUAL, "carpetaCompartida")
 PATH_TXT_VIDEO = os.path.join(PATH_ACTUAL, "pathVideo.txt")
 PATH_TXT_AUDIO = os.path.join(PATH_CARPETA_COMPARTIDA, "pathAudio.txt")
 
-ANCHOVENTANA = 1000
+ANCHOVENTANA = 1200
 ALTURAVENTANA = 900
 
 
@@ -76,21 +77,147 @@ if __name__ == "__main__":
         # Se cierra la aplicación si no se pudo encontrar el video
         sys.exit("⚠️ No se pudo obtener el nombre del video")
 
+    # ---- Ventana principal ----
+
     # Creamos nuestra ventana
     root = tkinter.Tk()
     # Le cambiamos el nombre a nuestra ventana
-    root.title("Dashboard")
+    root.title("Generador de subtítulos automáticos")
     # LLamamos a la función para centrar nuestra ventana
     centrarPantalla(root=root)
 
-    # Creamos un frame a partir de la ventana para que este nos sirva como
-    # salida de video
-    frame = tkinter.Frame(root, background="black")
-    frame.pack(fill=tkinter.BOTH, expand=1)
+    # ---- Estructura de la interfaz ----
+
+    # Frame para los controles (derecha)
+    controls_frame = tkinter.Frame(root, width=300, bg="lightgrey")
+    controls_frame.pack(side=tkinter.RIGHT, fill=tkinter.Y)
+    controls_frame.pack_propagate(False)  # Para que no cambie de tamaño el frame
+
+    # Frame para el video (izquierda)
+    video_frame = tkinter.Frame(root, background="black")
+    video_frame.pack(side=tkinter.LEFT, fill=tkinter.BOTH, expand=True)
+
+    # ---- Lógica VLC ----
 
     # Creamos una instancia de VLC y del reproductor
     instance = vlc.Instance()
     reproductor = instance.media_player_new()
+
+    # Variables para el control de subtítulos
+    fontVariable = tkinter.StringVar(root, "Arial")
+    sizeVariable = tkinter.IntVar(root, 30)
+    positionVariable = tkinter.StringVar(root, "Abajo")
+    colorVariable = tkinter.StringVar(root, "#FFFFFF")
+
+    # ---- Funciones de control del reproductor ----
+    def pausar():
+        # Le decimos al reproductor que pause el video
+        reproductor.pause()
+
+        # Cambiamos el texto del botón
+        pause_button.config(text="Play" if not reproductor.is_playing() else "Pausa")
+
+    def cambiarVolumen(volumen):
+        reproductor.audio_set_volume(int(volumen))
+
+    def elegirColor():
+        codigoColor = colorchooser.askcolor(title="Elige un color")
+
+        if codigoColor:
+            colorVariable.set(codigoColor[1])
+            color_display.config(bg=codigoColor[1])
+
+    def generate_subtitles():
+        print("--- GENERANDO SUBTÍTULOS CON LAS SIGUIENTES OPCIONES ---")
+        print(f"Fuente: {fontVariable.get()}")
+        print(f"Tamaño: {sizeVariable.get()}")
+        print(f"Color: {colorVariable.get()}")
+        print(f"Posición: {positionVariable.get()}")
+
+        # -------- Lógica para procesamiento de subtítulos -----------
+
+    # --- WIDGETS DE CONTROL ---
+    
+    # Sección de reproducción
+    playback_lf = tkinter.LabelFrame(
+        controls_frame, text="Reproducción", padx=10, pady=10, bg="lightgrey"
+    )
+    playback_lf.pack(pady=10, padx=10, fill=tkinter.X)
+
+    pause_button = tkinter.Button(playback_lf, text="Pausa", command=pausar)
+    pause_button.pack(fill=tkinter.X)
+
+    volume_slider = tkinter.Scale(
+        playback_lf,
+        from_=0,
+        to=100,
+        orient=tkinter.HORIZONTAL,
+        command=cambiarVolumen,
+        bg="lightgrey",
+        highlightthickness=0,
+        label="Volumen",
+    )
+    volume_slider.set(100)
+    volume_slider.pack(fill=tkinter.X, pady=(5, 0))
+
+    # Sección de opciones de subtítulos
+    subs_lf = tkinter.LabelFrame(
+        controls_frame, text="Opciones de Subtítulos", padx=10, pady=10, bg="lightgrey"
+    )
+    subs_lf.pack(pady=10, padx=10, fill=tkinter.X)
+
+    # Fuente
+    tkinter.Label(subs_lf, text="Fuente:", bg="lightgrey").pack(anchor="w")
+    fonts = ["Arial", "Courier New", "Times New Roman", "Verdana"]
+    font_menu = tkinter.OptionMenu(subs_lf, fontVariable, *fonts)
+    font_menu.pack(fill=tkinter.X)
+
+    # Tamaño
+    tkinter.Label(subs_lf, text="Tamaño:", bg="lightgrey").pack(
+        anchor="w", pady=(10, 0)
+    )
+    size_spinbox = tkinter.Spinbox(subs_lf, from_=10, to=100, textvariable=sizeVariable)
+    size_spinbox.pack(fill=tkinter.X)
+
+    # Color
+    tkinter.Label(subs_lf, text="Color:", bg="lightgrey").pack(anchor="w", pady=(10, 0))
+    color_frame = tkinter.Frame(subs_lf, bg="lightgrey")
+    color_frame.pack(fill=tkinter.X)
+    color_button = tkinter.Button(color_frame, text="Seleccionar", command=elegirColor)
+    color_button.pack(side=tkinter.LEFT, expand=True, fill=tkinter.X, padx=(0, 5))
+    color_display = tkinter.Label(
+        color_frame, bg=colorVariable.get(), width=4, relief="sunken"
+    )
+    color_display.pack(side=tkinter.RIGHT)
+
+    # Posición
+    tkinter.Label(subs_lf, text="Posición:", bg="lightgrey").pack(
+        anchor="w", pady=(10, 0)
+    )
+    positions = ["Abajo", "Medio", "Arriba"]
+    for pos in positions:
+        rb = tkinter.Radiobutton(
+            subs_lf,
+            text=pos,
+            variable=positionVariable,
+            value=pos,
+            bg="lightgrey",
+            activebackground="lightgrey",
+        )
+        rb.pack(anchor="w")
+
+    # Botón de Generar
+    generate_button = tkinter.Button(
+        controls_frame,
+        text="Generar Subtítulos",
+        command=generate_subtitles,
+        bg="#4CAF50",
+        fg="white",
+        font=("Arial", 10, "bold"),
+    )
+    generate_button.pack(side=tkinter.BOTTOM, fill=tkinter.X, padx=10, pady=10)
+
+    # ---- Procesamiento archivos ----
 
     # Obtenemos el nombre del video
     nombre_base = os.path.basename(p=pathVideoHost)
@@ -123,20 +250,23 @@ if __name__ == "__main__":
     with open(file=os.path.join(NOMBRE_CARPETA, NOMBRE_TXT_AUDIO), mode="w") as f:
         f.write(os.path.join(NOMBRE_CARPETA, os.path.basename(pathAudioCreado)))
 
+    # ---- Reproducción ----
+
     def reproducirVideo():
         # Identificamos que sistema de gestión de ventanas se esta usando
 
         # Para Linux
         if sys.platform.startswith("linux"):
-            reproductor.set_xwindow(frame.winfo_id())
+            reproductor.set_xwindow(video_frame.winfo_id())
         # Para windows
         elif sys.platform.startswith("win32"):
-            reproductor.set_hwnd(frame.winfo_id())
+            reproductor.set_hwnd(video_frame.winfo_id())
 
         # Reproducimos el video (se escucha con audio gracias a que utiliza vlc)
         reproductor.play()
+        pause_button.config(text="Pausa")
 
-    # Para asegurarnos que la ventana este lista antes de reproducir, le mandamos el objeto de 
+    # Para asegurarnos que la ventana este lista antes de reproducir, le mandamos el objeto de
     # reproducirVideo para que este pueda ejecutarlo mas tarde (1ms mas tarde) cuando se inicie el main loop
     root.after(1, reproducirVideo)
 
