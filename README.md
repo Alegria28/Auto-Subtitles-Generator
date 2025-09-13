@@ -1,20 +1,28 @@
 # Generador Automático de Subtítulos
 
-Este proyecto es una herramienta para generar subtítulos automáticamente para un archivo de video y luego incrustarlos en el mismo. Utiliza `openai-whisper` para la transcripción de audio a texto y `MoviePy` para la manipulación de video.
+Este proyecto es una herramienta de escritorio para generar subtítulos automáticamente para un archivo de video y luego incrustarlos en el mismo. Utiliza `openai-whisper` para la transcripción de audio a texto, `MoviePy` para la manipulación de video, y `Tkinter` con `python-vlc` para la interfaz gráfica.
+
+## Características
+
+*   Interfaz gráfica para seleccionar y previsualizar el video.
+*   Controles de reproducción de video (pausa, barra de progreso, volumen).
+*   Opciones para personalizar la apariencia de los subtítulos (fuente, tamaño, color, posición).
+*   Procesamiento de video en un contenedor Docker para mantener el entorno limpio y reproducible.
 
 ## Requisitos
 
 *   **Python 3:** Para ejecutar el script de la interfaz.
 *   **Docker:** Para ejecutar el contenedor de procesamiento.
+*   **VLC:** Necesario para la reproducción de video en la interfaz.
 
 ### Dependencias del Sistema
 
 Antes de ejecutar el script local (`main.py`), asegúrate de tener instaladas las siguientes herramientas en tu sistema:
 
-*   **FFmpeg:** La librería `moviepy` lo necesita para procesar archivos de video y audio.
-    *   En Debian/Ubuntu: `sudo apt-get install ffmpeg`
-    *   En macOS (con Homebrew): `brew install ffmpeg`
-    *   En Windows: Descárgalo desde el [sitio oficial](https://ffmpeg.org/download.html) y añade el ejecutable a tu PATH.
+*   **VLC Media Player:** La interfaz gráfica lo utiliza para reproducir el video.
+    *   En Debian/Ubuntu: `sudo apt-get install vlc`
+    *   En macOS (con Homebrew): `brew install vlc`
+    *   En Windows: Descárgalo desde el [sitio oficial](https://www.videolan.org/vlc/).
 
 *   **Tkinter:** Es la librería para la interfaz gráfica. En muchas instalaciones de Python ya viene incluida, pero en algunas distribuciones de Linux podría necesitarse instalar por separado.
     *   En Debian/Ubuntu: `sudo apt-get install python3-tk`
@@ -52,19 +60,25 @@ docker build -t auto-subtitles-generator .
 
 *(Puedes cambiar `auto-subtitles-generator` por el nombre que prefieras)*.
 
-### 2. Preparar el Video
+### 2. Ejecutar la Aplicación Principal
 
-A continuación, ejecuta el script de la interfaz para seleccionar tu video y preparar los archivos.
+A continuación, ejecuta el script de la interfaz. Asegúrate de tener el entorno virtual activado si seguiste los pasos de configuración.
 
 ```bash
 python main.py
 ```
 
-Se abrirá una ventana para que selecciones el archivo de video. El script copiará el video y extraerá su audio en la carpeta `carpetaCompartida/`.
+Se abrirá una ventana para que selecciones el archivo de video. Una vez seleccionado, la aplicación mostrará el video y las opciones para configurar los subtítulos.
 
-### 3. Ejecutar el Procesamiento
+### 3. Configurar y Generar Subtítulos
 
-Una vez que el paso anterior haya finalizado, ejecuta el contenedor de Docker para que comience la generación de subtítulos. El siguiente comando "monta" la `carpetaCompartida` de tu máquina dentro del contenedor, permitiendo que el script acceda a los archivos.
+Usa la interfaz para ajustar las opciones de los subtítulos como fuente, tamaño, color y posición. Cuando estés listo, haz clic en el botón **"Generar Subtítulos"**.
+
+*Nota: Actualmente, el botón "Generar Subtítulos" prepara los archivos necesarios pero no inicia el proceso de Docker automáticamente. El siguiente paso debe realizarse manualmente.*
+
+### 4. Ejecutar el Procesamiento con Docker
+
+Una vez que la aplicación principal ha preparado los archivos en la carpeta `carpetaCompartida`, ejecuta el contenedor de Docker para que comience la generación de subtítulos. El siguiente comando "monta" la `carpetaCompartida` de tu máquina dentro del contenedor, permitiendo que el script acceda a los archivos.
 
 ```bash
 docker run --rm -v "$(pwd)/carpetaCompartida:/autoSubtitlesGenerator/carpetaCompartida" auto-subtitles-generator
@@ -75,6 +89,6 @@ docker run --rm -v "$(pwd)/carpetaCompartida:/autoSubtitlesGenerator/carpetaComp
 
 El proceso de transcripción puede tardar varios minutos, dependiendo de la duración del video y la potencia de tu máquina. Verás el progreso en la terminal.
 
-### 4. Obtener el Resultado
+### 5. Obtener el Resultado
 
 ¡Listo! Cuando el contenedor termine su ejecución, encontrarás el video final con los subtítulos incrustados en `carpetaCompartida/videoConSubtitulos.mp4`.
