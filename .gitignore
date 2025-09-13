@@ -1,5 +1,5 @@
 # Ignoramos el entorno virtual
-pythonEnvironment/
+venv/
 
 # Solo el contenido de la carpeta
 carpetaCompartida/*
