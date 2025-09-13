@@ -1,12 +1,14 @@
+# cspell:disable
+
 # Información sobre los módulos: https://shorturl.at/slHUh
 
 # Importamos los módulos
-import tkinter # Para trabajar con UI
+import tkinter  # Para trabajar con UI
 import vlc  # Para reproducir el video
 
 # Del modulo tkinter, importamos la clase
 from tkinter import filedialog
-from tkinter import colorchooser 
+from tkinter import colorchooser
 
 # Del modulo moviepy en el sub-modulo editor, importamos la clase
 from moviepy.editor import VideoFileClip
@@ -100,25 +102,54 @@ if __name__ == "__main__":
     # ---- Lógica VLC ----
 
     # Creamos una instancia de VLC y del reproductor
-    instance = vlc.Instance()
+    instance = vlc.Instance(
+        "--avcodec-hw=none --quiet"
+    )  # Desactivamos la aceleracion por hardware para evitar errores de "deadlock"
     reproductor = instance.media_player_new()
 
-    # Variables para el control de subtítulos
-    fontVariable = tkinter.StringVar(root, "Arial")
-    sizeVariable = tkinter.IntVar(root, 30)
-    positionVariable = tkinter.StringVar(root, "Abajo")
-    colorVariable = tkinter.StringVar(root, "#FFFFFF")
+    # Variables de control
+    isSliderActive = False
 
     # ---- Funciones de control del reproductor ----
     def pausar():
-        # Le decimos al reproductor que pause el video
         reproductor.pause()
-
-        # Cambiamos el texto del botón
-        pause_button.config(text="Play" if not reproductor.is_playing() else "Pausa")
 
     def cambiarVolumen(volumen):
         reproductor.audio_set_volume(int(volumen))
+
+    def setPosition(posicion):
+        if reproductor.get_media():
+            pos = int(posicion) / 1000.0
+            reproductor.set_position(pos)
+            # Si no se está reproduciendo, le damos a play
+            if not reproductor.is_playing():
+                reproductor.play()
+                # Aseguramos que el botón muestre "Pausa"
+                pause_button.config(text="Pausa")
+
+    def actualizar_slider():
+        if not isSliderActive:
+            is_playing = reproductor.is_playing()
+            pause_button.config(text="Reproducir" if not is_playing else "Pausa")
+
+            if is_playing:
+                posicion_actual = reproductor.get_position()
+                if posicion_actual > 0.99:
+                    # Cuando el video termina, lo reinicia llamando a setPosition(0)
+                    setPosition(0)
+                else:
+                    position_slider.set(int(posicion_actual * 1000))
+
+        root.after(200, actualizar_slider)
+
+    def on_slider_press(event):
+        global isSliderActive
+        isSliderActive = True
+
+    def on_slider_release(event):
+        global isSliderActive
+        isSliderActive = False
+        setPosition(position_slider.get())
 
     def elegirColor():
         codigoColor = colorchooser.askcolor(title="Elige un color")
@@ -136,9 +167,8 @@ if __name__ == "__main__":
 
         # -------- Lógica para procesamiento de subtítulos -----------
 
-    # --- WIDGETS DE CONTROL ---
-    
-    # Sección de reproducción
+    # --- Widgets de control ---
+
     playback_lf = tkinter.LabelFrame(
         controls_frame, text="Reproducción", padx=10, pady=10, bg="lightgrey"
     )
@@ -146,6 +176,19 @@ if __name__ == "__main__":
 
     pause_button = tkinter.Button(playback_lf, text="Pausa", command=pausar)
     pause_button.pack(fill=tkinter.X)
+
+    position_slider = tkinter.Scale(
+        playback_lf,
+        from_=0,
+        to=1000,
+        orient=tkinter.HORIZONTAL,
+        showvalue=0,
+        bg="lightgrey",
+        highlightthickness=0,
+    )
+    position_slider.pack(fill=tkinter.X, pady=(5, 0))
+    position_slider.bind("<ButtonPress-1>", on_slider_press)
+    position_slider.bind("<ButtonRelease-1>", on_slider_release)
 
     volume_slider = tkinter.Scale(
         playback_lf,
@@ -157,8 +200,15 @@ if __name__ == "__main__":
         highlightthickness=0,
         label="Volumen",
     )
-    volume_slider.set(100)
+    volume_slider.set(50)
     volume_slider.pack(fill=tkinter.X, pady=(5, 0))
+
+    # --- Variables y widgets de subtitulos
+
+    fontVariable = tkinter.StringVar(root, "Arial")
+    sizeVariable = tkinter.IntVar(root, 30)
+    positionVariable = tkinter.StringVar(root, "Abajo")
+    colorVariable = tkinter.StringVar(root, "#FFFFFF")
 
     # Sección de opciones de subtítulos
     subs_lf = tkinter.LabelFrame(
@@ -266,6 +316,11 @@ if __name__ == "__main__":
         reproductor.play()
         pause_button.config(text="Pausa")
 
+        # Actualizamos nuestra variable y llamamos a nuestra funcion
+        global isPlaying
+        isPlaying = True
+        actualizar_slider()
+
     # Para asegurarnos que la ventana este lista antes de reproducir, le mandamos el objeto de
     # reproducirVideo para que este pueda ejecutarlo mas tarde (1ms mas tarde) cuando se inicie el main loop
     root.after(1, reproducirVideo)
@@ -273,5 +328,7 @@ if __name__ == "__main__":
     # Iniciamos el loop principal de la ventana
     root.mainloop()
 
+    # ---- Limpieza ----
     # Borramos el .mp3 creado
     os.remove(nombreAudio)
+    reproductor.stop()
