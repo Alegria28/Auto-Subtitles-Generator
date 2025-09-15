@@ -1,32 +1,50 @@
-# Modulo de OpenAi para la transcripción del video
+# cspell: disable
+
+# Importamos los módulos
 import whisper
 
-# Modulo para poder trabajar con video
+# Del modulo editor de moviepy importamos las clases
 from moviepy.editor import VideoFileClip, ImageClip, CompositeVideoClip
 
-# Para borrar el archivo de audio
-import os
-
-# Librería pillow para el manejo y procesamiento de imágenes, se utiliza en lugar de
-# ImageMagick para mayor facilidad
+# Del modulo pillow importamos los módulos
 from PIL import Image, ImageDraw, ImageFont
-import numpy as np
+
+# Módulos biblioteca estándar
+import numpy
+import os
+import json
 
 # ------ Constantes ------
 NOMBRE_CARPETA_COMPARTIDA = "/autoSubtitlesGenerator/carpetaCompartida"
 NOMBRE_TXT_VIDEO = "pathVideo.txt"
 NOMBRE_TXT_AUDIO = "pathAudio.txt"
+NOMBRE_JSON = "caracteristicasVideo.json"
 
 PATH_VIDEO_SALIDA = os.path.join(NOMBRE_CARPETA_COMPARTIDA, "videoConSubtitulos.mp4")
 
-FONTSIZE = 40
+# Diccionario para mapear posiciones de GUI a valores de moviepy
+POSICIONES = {"Abajo": "bottom", "Medio": "center", "Arriba": "top"}
 
-def crearTextClip(palabra, duracion, color):
+
+def convertirRGB(colorHexadecimal):
+    # Quitamos el # del string
+    colorHexadecimal = colorHexadecimal.lstrip("#")
+
+    # Extraemos cada componente r, g, b de la cadena pasándolo a decimal, le decimos que ese numero estaba en hexadecimal
+    r = int(colorHexadecimal[0:2], 16)
+    g = int(colorHexadecimal[2:4], 16)
+    b = int(colorHexadecimal[4:6], 16)
+
+    # Lo regresamos como tupla
+    return (r, g, b)
+
+
+def crearTextClip(palabra, duracion, color, tamanoFuente):
 
     # Cargamos una fuente con tamaño en especifico
     try:
         font = ImageFont.truetype(
-            "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", FONTSIZE
+            "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", tamanoFuente
         )
     # En caso de que esta no se haya podido cargar
     except Exception as e:
@@ -36,30 +54,38 @@ def crearTextClip(palabra, duracion, color):
         )
         font = ImageFont.load_default()
 
-    # Creamos una imagen 1px x 1px solamente para después ver cuanto espacio ocupa en realidad el texto, RGB
-    # es simplemente el modo de color
-    imagenTemporal = ImageDraw.Draw(Image.new("RGBA", (1, 1)))
+    # Obtenemos el ancho y alto del texto, getbbox nos da (left, top, right, bottom) del texto
+    _, top, right, bottom = font.getbbox(palabra)
+    # Guardamos el ancho
+    textAncho = right
+    # Guardamos la altura real
+    textAltura = bottom - top
 
-    # textbbox() calcula el tamaño que ocuparía el texto si este se dibujara. Este regresa una tupla de 4
-    # números representando las coordenadas (x0, y0, x1, y1) de la caja invisible que rodea a la palabra.
-    # El (0,0) es la coordenada de anclaje o el punto hipotético donde se empezaría a dibujar el texto
-    cajaTemporal = imagenTemporal.textbbox((0, 0), palabra, font)
-    # Calculamos el ancho
-    textAncho = cajaTemporal[2] - cajaTemporal[0]
-    # Calculamos la altura
-    textAltura = cajaTemporal[3] - cajaTemporal[1]
+    # Aumentamos el margen para evitar cortes, especialmente en vertical
+    margenHorizontal = 20
+    margenVertical = 20
 
-    # Crea la imagen final con el tamaño correcto y un pequeño margen (10), ademas de no tener ningún color de
-    # fondo (0,0,0,0)
-    img = Image.new("RGBA", (textAncho + 10, textAltura + 10), (0, 0, 0, 0))
-    # Hacemos un dibujo a partir de la imagen, de esta manera podemos dibujar sobre la imagen
+    # Crea la imagen final con el tamaño correcto y un margen más generoso
+    img = Image.new(
+        "RGBA",
+        (textAncho + margenHorizontal, textAltura + margenVertical),
+        (0, 0, 0, 0),
+    )
+    # Hacemos un dibujo a partir de la imagen
     draw = ImageDraw.Draw(img)
-    # A esa imagen por medio del draw le agregamos el texto con esa posición dentro de la imagen creada (especificamos el parámetro que le estamos pasando)
-    draw.text(xy=(5, 5), text=palabra, font=font, fill=color)
+
+    # Dibujamos el texto, ajustando la posición para centrarlo dentro del nuevo margen
+    # La posición Y es (margen_vertical / 2) - top para compensar las letras que empiezan por encima de la línea base
+    draw.text(
+        xy=(margenHorizontal / 2, (margenVertical / 2) - top),
+        text=palabra,
+        font=font,
+        fill=color,
+    )
 
     # Hacemos la conversion para poder usar la imagen de la librería Pillow y moviepy, dado que ambos conocen
     # los array de numpy, asi que una imagen se puede representar como un array de numpy
-    imagenArray = np.array(img)
+    imagenArray = numpy.array(img)
     # A partir de este array hacemos un ImageClip a quien después le especificamos la duración que va a tener
     clip = ImageClip(imagenArray).set_duration(duracion)
 
@@ -70,9 +96,28 @@ def crearTextClip(palabra, duracion, color):
 # Entrada principal al programa
 if __name__ == "__main__":
 
+    # --- Lectura de archivos ---
+
     # Leemos el archivo .txt de la carpeta compartida para obtener el nombre del video
     with open(os.path.join(NOMBRE_CARPETA_COMPARTIDA, NOMBRE_TXT_VIDEO), "r") as f:
         pathVideoEnCarpeta = f.read().strip()
+
+    # Leemos el archivo .txt de la carpeta compartida para obtener el nombre del video
+    with open(os.path.join(NOMBRE_CARPETA_COMPARTIDA, NOMBRE_TXT_AUDIO), "r") as f:
+        pathAudioEnCarpeta = f.read().strip()
+
+    # Leemos el archivo JSON para obtener las características del video
+    with open(os.path.join(NOMBRE_CARPETA_COMPARTIDA, NOMBRE_JSON), "r") as f:
+        caracteristicasVideo = json.load(f)
+
+    # Obtenemos los valores con los que vamos a trabajar
+    tamanoFuente = caracteristicasVideo["size"]  # El tamaño lo trabajamos asi
+    posicionFuente = POSICIONES[
+        caracteristicasVideo["position"]
+    ]  # Hacemos la conversion necesaria para poder utilizar el valor correcto
+    colorFuente = convertirRGB(caracteristicasVideo["color"])
+
+    # --- Procesamiento ---
 
     # Creamos la ruta del video, juntando el nombre de la carpeta compartida y el nombre del video
     pathVideo = os.path.join(
@@ -88,14 +133,10 @@ if __name__ == "__main__":
 
     # Especificamos el modelo de Whisper
     # model = whisper.load_model("large-v3")
-    model = whisper.load_model("tiny")
+    model = whisper.load_model("medium")
 
     # Mostramos mensaje y después esperamos antes de realizar la transcripción
     print("📝 Generando transcripción")
-
-    # Leemos el archivo .txt de la carpeta compartida para obtener el nombre del video
-    with open(os.path.join(NOMBRE_CARPETA_COMPARTIDA, NOMBRE_TXT_AUDIO), "r") as f:
-        pathAudioEnCarpeta = f.read().strip()
 
     # Obtenemos la transcripción, utilizando el audio que esta en la carpeta compartida
     resultado = model.transcribe(
@@ -126,11 +167,14 @@ if __name__ == "__main__":
 
                 # Creamos el clip de texto a partir de la información
                 clipTexto = crearTextClip(
-                    palabra, duracion, (255, 255, 255)
-                )  # Color blanco
+                    palabra=palabra,
+                    duracion=duracion,
+                    color=colorFuente,
+                    tamanoFuente=tamanoFuente,
+                )
 
                 # Establecemos la posición, inicio y duración del clip
-                clipTexto = clipTexto.set_position("bottom")
+                clipTexto = clipTexto.set_position(posicionFuente)
                 clipTexto = clipTexto.set_start(inicio)
 
                 # Agregamos este clip a nuestra lista

@@ -17,11 +17,13 @@ from moviepy.editor import VideoFileClip
 import sys  # Para poder salir del programa
 import os  # Para trabajar con rutas
 import shutil  # Para copiar archivos
+import json  # Para trabajar con archivos JSON
 
 # --- Constantes ---
 NOMBRE_CARPETA = "carpetaCompartida"
 NOMBRE_TXT_VIDEO = "pathVideo.txt"
 NOMBRE_TXT_AUDIO = "pathAudio.txt"
+NOMBRE_JSON = "caracteristicasVideo.json"
 
 PATH_ACTUAL = os.getcwd()  # Directorio actual de trabajo
 PATH_CARPETA_COMPARTIDA = os.path.join(PATH_ACTUAL, "carpetaCompartida")
@@ -186,7 +188,20 @@ if __name__ == "__main__":
         print(f"Color: {colorVariable.get()}")
         print(f"Posición: {positionVariable.get()}")
 
-        # -------- Lógica para procesamiento de subtítulos -----------
+        # Creamos un diccionario con los valores obtenidos
+        diccionario = {
+            "font": fontVariable.get(),
+            "size": sizeVariable.get(),
+            "color": colorVariable.get(),
+            "position": positionVariable.get(),
+        }
+
+        # A partir del diccionario, lo convertimos en JSON
+        formatoJson = json.dumps(diccionario, indent=4)  # Para que sea mas facil leerlo
+
+        # Dentro de la carpeta compartida escribimos el JSON, ya que sera leído por el contenedor
+        with open(file=os.path.join(NOMBRE_CARPETA, NOMBRE_JSON), mode="w") as f:
+            f.write(formatoJson)
 
     # --- Widgets de control ---
 
@@ -295,8 +310,8 @@ if __name__ == "__main__":
         # Se crea un radio button para cada una de las opciones
         rb = tkinter.Radiobutton(
             subs_lf,
-            text=pos, # El texto que esta en la lista
-            variable=positionVariable, # Se asocia con la variable antes creada
+            text=pos,  # El texto que esta en la lista
+            variable=positionVariable,  # Se asocia con la variable antes creada
             value=pos,
             bg="lightgrey",
             activebackground="lightgrey",
