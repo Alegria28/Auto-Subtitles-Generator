@@ -50,45 +50,31 @@ Una vez ejecutado, verás que el nombre del entorno (`venv`) aparece al inicio d
 
 Sigue estos pasos en orden para generar un video con subtítulos:
 
-### 1. Construir la Imagen de Docker
+### 1. Ejecutar la Aplicación Principal
 
-Primero, necesitas construir la imagen de Docker que contiene el entorno de procesamiento. Desde la raíz del proyecto, ejecuta:
-
-```bash
-docker build -t auto-subtitles-generator .
-```
-
-*(Puedes cambiar `auto-subtitles-generator` por el nombre que prefieras)*.
-
-### 2. Ejecutar la Aplicación Principal
-
-A continuación, ejecuta el script de la interfaz. Asegúrate de tener el entorno virtual activado si seguiste los pasos de configuración.
+Asegúrate de tener el entorno virtual activado si seguiste los pasos de configuración. Luego, ejecuta el script de la interfaz:
 
 ```bash
 python main.py
 ```
 
-Se abrirá una ventana para que selecciones el archivo de video. Una vez seleccionado, la aplicación mostrará el video y las opciones para configurar los subtítulos.
+### 2. Seleccionar Video y Configurar Subtítulos
 
-### 3. Configurar y Generar Subtítulos
+Al iniciar, se abrirá una ventana para que selecciones el archivo de video. Una vez seleccionado, la aplicación mostrará el video y las opciones para configurar los subtítulos.
 
-Usa la interfaz para ajustar las opciones de los subtítulos como fuente, tamaño, color y posición. Cuando estés listo, haz clic en el botón **"Generar Subtítulos"**.
+Usa la interfaz para ajustar las opciones de los subtítulos como fuente, tamaño, color y posición.
 
-*Nota: Actualmente, el botón "Generar Subtítulos" prepara los archivos necesarios pero no inicia el proceso de Docker automáticamente. El siguiente paso debe realizarse manualmente.*
+### 3. Generar el Video
 
-### 4. Ejecutar el Procesamiento con Docker
+Cuando estés listo, haz clic en el botón **"Generar Subtítulos"**.
 
-Una vez que la aplicación principal ha preparado los archivos en la carpeta `carpetaCompartida`, ejecuta el contenedor de Docker para que comience la generación de subtítulos. El siguiente comando "monta" la `carpetaCompartida` de tu máquina dentro del contenedor, permitiendo que el script acceda a los archivos.
+Esto abrirá una nueva ventana de terminal que automatiza todo el proceso:
+1.  **Construye la imagen de Docker** (`docker build`).
+2.  **Ejecuta el contenedor** (`docker run`) para procesar el video.
+3.  **Muestra el progreso** de la transcripción y la generación del video.
 
-```bash
-docker run --rm -v "$(pwd)/carpetaCompartida:/autoSubtitlesGenerator/carpetaCompartida" auto-subtitles-generator
-```
+El proceso de transcripción puede tardar varios minutos, dependiendo de la duración del video y la potencia de tu máquina.
 
-*   `--rm`: Elimina el contenedor automáticamente cuando termina el proceso.
-*   `-v`: Vincula la carpeta local con la carpeta dentro del contenedor.
+### 4. Obtener el Resultado
 
-El proceso de transcripción puede tardar varios minutos, dependiendo de la duración del video y la potencia de tu máquina. Verás el progreso en la terminal.
-
-### 5. Obtener el Resultado
-
-¡Listo! Cuando el contenedor termine su ejecución, encontrarás el video final con los subtítulos incrustados en `carpetaCompartida/videoConSubtitulos.mp4`.
+¡Listo! Cuando el proceso en la nueva terminal termine, encontrarás el video final con los subtítulos incrustados en `carpetaCompartida/videoConSubtitulos.mp4`.
