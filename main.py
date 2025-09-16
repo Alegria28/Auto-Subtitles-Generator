@@ -18,6 +18,7 @@ import sys  # Para poder salir del programa
 import os  # Para trabajar con rutas
 import shutil  # Para copiar archivos
 import json  # Para trabajar con archivos JSON
+import subprocess  # Para ejecutar comandos en terminal
 
 # --- Constantes ---
 NOMBRE_CARPETA = "carpetaCompartida"
@@ -202,6 +203,36 @@ if __name__ == "__main__":
         # Dentro de la carpeta compartida escribimos el JSON, ya que sera leído por el contenedor
         with open(file=os.path.join(NOMBRE_CARPETA, NOMBRE_JSON), mode="w") as f:
             f.write(formatoJson)
+
+        # Obtenemos la ruta absoluta de la carpeta para que podamos crear el conenedor correctamente
+        pathAbsolutoCarpetaCompartida = os.path.abspath(PATH_CARPETA_COMPARTIDA)
+
+        # Creamos el comando completo a ejecutar en la nueva terminal
+        comandoCompleto = f"""
+        echo '--- Iniciando proceso de generacion de subtitulos en Docker ---' && \\
+        docker build -f Dockerfile -t auto-subtitles-generator . && \\
+        docker image prune -f && \\
+        echo '--- Creando contenedor para generar los subtitulos ---' && \\
+        docker run --rm -it -v "{pathAbsolutoCarpetaCompartida}:/autoSubtitlesGenerator/{NOMBRE_CARPETA}" auto-subtitles-generator && \\
+        echo '--- Proceso finalizado, el video con subtitulos se encuentra en la carpeta: {NOMBRE_CARPETA} ---' && \\
+        echo '--- Puedes cerrar esta terminal ---' && \\
+        exec bash
+        """
+
+        # Abrimos la nueva terminal que ejecutara los comandos, añagiendo el argumento --geometry para centrar la terminal
+        subprocess.Popen(
+            [
+                "gnome-terminal",
+                "--maximize",
+                "--",
+                "bash",
+                "-c",
+                comandoCompleto,
+            ]
+        )
+
+        # Cerramos la ventana de la GUI
+        root.destroy()
 
     # --- Widgets de control ---
 
