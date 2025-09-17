@@ -26,6 +26,40 @@ PATH_VIDEO_SALIDA = os.path.join(NOMBRE_CARPETA_COMPARTIDA, "videoConSubtitulos.
 POSICIONES = {"Abajo": "bottom", "Medio": "center", "Arriba": "top"}
 
 
+# Diccionario para mapear nombres de fuentes a archivos .ttf
+FUENTES = {
+    "Arial": "arial.ttf",
+    "Arial Black": "ariblk.ttf",
+    "Arial Bold": "arialbd.ttf",
+    "Arial Italic": "ariali.ttf",
+    "Arial Bold Italic": "arialbi.ttf",
+    "Comic Sans MS": "comic.ttf",
+    "Comic Sans MS Bold": "comicbd.ttf",
+    "Courier New": "cour.ttf",
+    "Courier New Bold": "courbd.ttf",
+    "Courier New Italic": "couri.ttf",
+    "Courier New Bold Italic": "courbi.ttf",
+    "Georgia": "georgia.ttf",
+    "Georgia Bold": "georgiab.ttf",
+    "Georgia Italic": "georgiai.ttf",
+    "Georgia Bold Italic": "georgiaz.ttf",
+    "Impact": "impact.ttf",
+    "Times New Roman": "times.ttf",
+    "Times New Roman Bold": "timesbd.ttf",
+    "Times New Roman Italic": "timesi.ttf",
+    "Times New Roman Bold Italic": "timesbi.ttf",
+    "Trebuchet MS": "trebuc.ttf",
+    "Trebuchet MS Bold": "trebucbd.ttf",
+    "Trebuchet MS Italic": "trebucit.ttf",
+    "Trebuchet MS Bold Italic": "trebucbi.ttf",
+    "Verdana": "verdana.ttf",
+    "Verdana Bold": "verdanab.ttf",
+    "Verdana Italic": "verdanai.ttf",
+    "Verdana Bold Italic": "verdanaz.ttf",
+    "Webdings": "webdings.ttf",
+}
+
+
 def convertirRGB(colorHexadecimal):
     # Quitamos el # del string
     colorHexadecimal = colorHexadecimal.lstrip("#")
@@ -39,13 +73,14 @@ def convertirRGB(colorHexadecimal):
     return (r, g, b)
 
 
-def crearTextClip(palabra, duracion, color, tamanoFuente):
+def crearTextClip(palabra, duracion, color, tamanoFuente, nombreFuente):
 
     # Cargamos una fuente con tamaño en especifico
     try:
-        font = ImageFont.truetype(
-            "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", tamanoFuente
-        )
+        # Obtenemos la llave de la fuente segun el nombre que nos llego
+        archivoFuente = FUENTES.get(nombreFuente)
+        # Cargamos la fuente
+        font = ImageFont.truetype(archivoFuente, tamanoFuente)
     # En caso de que esta no se haya podido cargar
     except Exception as e:
         print(
@@ -116,6 +151,8 @@ if __name__ == "__main__":
         caracteristicasVideo["position"]
     ]  # Hacemos la conversion necesaria para poder utilizar el valor correcto
     colorFuente = convertirRGB(caracteristicasVideo["color"])
+    # Obtenemos el nombre de la fuente
+    nombreFuente = caracteristicasVideo["font"]
 
     # --- Procesamiento ---
 
@@ -171,6 +208,7 @@ if __name__ == "__main__":
                     duracion=duracion,
                     color=colorFuente,
                     tamanoFuente=tamanoFuente,
+                    nombreFuente=nombreFuente
                 )
 
                 # Establecemos la posición, inicio y duración del clip

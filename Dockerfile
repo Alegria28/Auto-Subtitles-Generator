@@ -7,8 +7,17 @@ RUN apt update && apt upgrade -y
 # La librería openai-whisper utiliza ffmpeg, lo instalamos
 RUN apt install ffmpeg -y
 
-# Instalamos una fuente básica
-RUN apt install fonts-dejavu -y
+# Instalamos las fuentes
+RUN apt-get update && apt-get install -y fonts-dejavu && \
+    # Habilitamos el componente 'contrib' para poder instalar las fuentes de Microsoft
+    echo "deb http://deb.debian.org/debian bookworm contrib" >> /etc/apt/sources.list && \
+    apt-get update && \
+    # Pre-aceptamos la licencia de EULA para la instalación no interactiva
+    echo "ttf-mscorefonts-installer msttcorefonts/accepted-mscorefonts-eula select true" | debconf-set-selections && \
+    # Instalamos el paquete de fuentes
+    apt-get install -y ttf-mscorefonts-installer && \
+    # Limpiamos la cache de apt para reducir el tamaño de la imagen
+    rm -rf /var/lib/apt/lists/*
 
 # Instalamos las librerías necesarias de python
 RUN pip install --no-cache-dir \

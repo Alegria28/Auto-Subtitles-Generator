@@ -298,7 +298,37 @@ if __name__ == "__main__":
     # Fuente
     tkinter.Label(subs_lf, text="Fuente:", bg="lightgrey").pack(anchor="w")
     # Lista de python con las fuentes disponibles
-    fonts = ["Arial", "Courier New", "Times New Roman", "Verdana"]
+    fonts = [
+        "Arial",
+        "Arial Black",
+        "Arial Bold",
+        "Arial Italic",
+        "Arial Bold Italic",
+        "Comic Sans MS",
+        "Comic Sans MS Bold",
+        "Courier New",
+        "Courier New Bold",
+        "Courier New Italic",
+        "Courier New Bold Italic",
+        "Georgia",
+        "Georgia Bold",
+        "Georgia Italic",
+        "Georgia Bold Italic",
+        "Impact",
+        "Times New Roman",
+        "Times New Roman Bold",
+        "Times New Roman Italic",
+        "Times New Roman Bold Italic",
+        "Trebuchet MS",
+        "Trebuchet MS Bold",
+        "Trebuchet MS Italic",
+        "Trebuchet MS Bold Italic",
+        "Verdana",
+        "Verdana Bold",
+        "Verdana Italic",
+        "Verdana Bold Italic",
+        "Webdings",
+    ]
     # Se crea un menu dentro de la nueva sección, vinculando la variable fontVariable y desempaquetando
     # la lista al momento de pasarlo como parámetro
     font_menu = tkinter.OptionMenu(subs_lf, fontVariable, *fonts)
