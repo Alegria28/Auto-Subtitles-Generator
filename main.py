@@ -75,10 +75,6 @@ if __name__ == "__main__":
         # Copiamos el video a la carpeta compartida
         shutil.copy(src=pathVideoHost, dst=PATH_CARPETA_COMPARTIDA)
 
-        # Dentro de la carpeta compartida escribimos en un .txt la ruta del video, ya que sera leído por el contenedor
-        with open(file=os.path.join(NOMBRE_CARPETA, NOMBRE_TXT_VIDEO), mode="w") as f:
-            f.write(os.path.join(NOMBRE_CARPETA, os.path.basename(pathVideoHost)))
-
     else:
         # Se cierra la aplicación si no se pudo encontrar el video
         sys.exit("⚠️ No se pudo obtener el nombre del video")
@@ -195,6 +191,12 @@ if __name__ == "__main__":
             "size": sizeVariable.get(),
             "color": colorVariable.get(),
             "position": positionVariable.get(),
+            "pathVideo": str(
+                os.path.join(NOMBRE_CARPETA, os.path.basename(pathVideoHost))
+            ),
+            "pathAudio": str(
+                os.path.join(NOMBRE_CARPETA, os.path.basename(pathAudioCreado))
+            ),
         }
 
         # A partir del diccionario, lo convertimos en JSON
@@ -418,10 +420,6 @@ if __name__ == "__main__":
 
     # Copiamos el audio a la carpeta compartida
     shutil.copy(src=pathAudioCreado, dst=PATH_CARPETA_COMPARTIDA)
-
-    # Dentro de la carpeta compartida escribimos en un .txt la ruta del audio, ya que sera leído por el contenedor
-    with open(file=os.path.join(NOMBRE_CARPETA, NOMBRE_TXT_AUDIO), mode="w") as f:
-        f.write(os.path.join(NOMBRE_CARPETA, os.path.basename(pathAudioCreado)))
 
     # ---- Reproducción ----
 

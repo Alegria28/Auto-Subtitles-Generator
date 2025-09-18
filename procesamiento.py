@@ -131,28 +131,22 @@ def crearTextClip(palabra, duracion, color, tamanoFuente, nombreFuente):
 # Entrada principal al programa
 if __name__ == "__main__":
 
-    # --- Lectura de archivos ---
-
-    # Leemos el archivo .txt de la carpeta compartida para obtener el nombre del video
-    with open(os.path.join(NOMBRE_CARPETA_COMPARTIDA, NOMBRE_TXT_VIDEO), "r") as f:
-        pathVideoEnCarpeta = f.read().strip()
-
-    # Leemos el archivo .txt de la carpeta compartida para obtener el nombre del video
-    with open(os.path.join(NOMBRE_CARPETA_COMPARTIDA, NOMBRE_TXT_AUDIO), "r") as f:
-        pathAudioEnCarpeta = f.read().strip()
+    # --- Lectura de Json ---
 
     # Leemos el archivo JSON para obtener las características del video
     with open(os.path.join(NOMBRE_CARPETA_COMPARTIDA, NOMBRE_JSON), "r") as f:
-        caracteristicasVideo = json.load(f)
+        caracteristicasJson = json.load(f)
 
     # Obtenemos los valores con los que vamos a trabajar
-    tamanoFuente = caracteristicasVideo["size"]  # El tamaño lo trabajamos asi
+    tamanoFuente = caracteristicasJson["size"]  # El tamaño lo trabajamos asi
     posicionFuente = POSICIONES[
-        caracteristicasVideo["position"]
+        caracteristicasJson["position"]
     ]  # Hacemos la conversion necesaria para poder utilizar el valor correcto
-    colorFuente = convertirRGB(caracteristicasVideo["color"])
+    colorFuente = convertirRGB(caracteristicasJson["color"])
     # Obtenemos el nombre de la fuente
-    nombreFuente = caracteristicasVideo["font"]
+    nombreFuente = caracteristicasJson["font"]
+    pathVideoEnCarpeta = caracteristicasJson["pathVideo"]
+    pathAudioEnCarpeta = caracteristicasJson["pathAudio"]
 
     # --- Procesamiento ---
 
@@ -208,7 +202,7 @@ if __name__ == "__main__":
                     duracion=duracion,
                     color=colorFuente,
                     tamanoFuente=tamanoFuente,
-                    nombreFuente=nombreFuente
+                    nombreFuente=nombreFuente,
                 )
 
                 # Establecemos la posición, inicio y duración del clip
