@@ -1,6 +1,9 @@
 # Ignoramos el entorno virtual
 venv/
 
+# Ignoramos la descarga del modelo de whisper
+.cache/
+
 # Solo el contenido de la carpeta
 carpetaCompartida/*
 !carpetaCompartida/

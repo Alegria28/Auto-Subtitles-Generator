@@ -26,10 +26,14 @@ NOMBRE_TXT_VIDEO = "pathVideo.txt"
 NOMBRE_TXT_AUDIO = "pathAudio.txt"
 NOMBRE_JSON = "caracteristicasVideo.json"
 
-PATH_ACTUAL = os.getcwd()  # Directorio actual de trabajo
-PATH_CARPETA_COMPARTIDA = os.path.join(PATH_ACTUAL, "carpetaCompartida")
-PATH_TXT_VIDEO = os.path.join(PATH_ACTUAL, "pathVideo.txt")
-PATH_TXT_AUDIO = os.path.join(PATH_CARPETA_COMPARTIDA, "pathAudio.txt")
+# Obtenemos la ruta absoluta de la carpeta donde está este archivo (main.py).
+# - __file__ es el nombre del archivo actual (puede ser una ruta relativa o absoluta, según cómo se ejecute el script).
+# - os.path.dirname(__file__) obtiene solo la carpeta que contiene este archivo, quitando el nombre del archivo.
+# - os.path.abspath(...) convierte esa ruta (relativa o absoluta) en una ruta absoluta.
+# Así, PATH_BASE siempre apunta a la carpeta raíz de tu proyecto, sin importar desde dónde ejecutes el script.
+PATH_BASE = os.path.abspath(os.path.dirname(__file__))
+PATH_CARPETA_COMPARTIDA = os.path.join(PATH_BASE, "carpetaCompartida")
+PATH_CACHE = os.path.join(PATH_BASE, ".cache")
 
 ANCHOVENTANA = 1200
 ALTURAVENTANA = 900
@@ -206,16 +210,16 @@ if __name__ == "__main__":
         with open(file=os.path.join(NOMBRE_CARPETA, NOMBRE_JSON), mode="w") as f:
             f.write(formatoJson)
 
-        # Obtenemos la ruta absoluta de la carpeta para que podamos crear el conenedor correctamente
-        pathAbsolutoCarpetaCompartida = os.path.abspath(PATH_CARPETA_COMPARTIDA)
-
         # Creamos el comando completo a ejecutar en la nueva terminal
         comandoCompleto = f"""
         echo '--- Iniciando proceso de generacion de subtitulos en Docker ---' && \\
         docker build -f Dockerfile -t auto-subtitles-generator . && \\
         docker image prune -f && \\
         echo '--- Creando contenedor para generar los subtitulos ---' && \\
-        docker run --rm -it -v "{pathAbsolutoCarpetaCompartida}:/autoSubtitlesGenerator/{NOMBRE_CARPETA}" auto-subtitles-generator && \\
+        docker run --rm -it \\
+        -v "{PATH_CARPETA_COMPARTIDA}:/autoSubtitlesGenerator/{NOMBRE_CARPETA}" \\
+        -v "{PATH_CACHE}:/root/.cache" \\
+        auto-subtitles-generator && \\
         echo '--- Proceso finalizado, el video con subtitulos se encuentra en la carpeta: {NOMBRE_CARPETA} ---' && \\
         echo '--- Puedes cerrar esta terminal ---' && \\
         exec bash
@@ -416,7 +420,7 @@ if __name__ == "__main__":
     audio.write_audiofile(os.path.basename(nombreAudio), codec="mp3")
 
     # Creamos la ruta en donde esta el audio que acabamos de crear
-    pathAudioCreado = os.path.join(PATH_ACTUAL, nombreAudio)
+    pathAudioCreado = os.path.join(PATH_BASE, nombreAudio)
 
     # Copiamos el audio a la carpeta compartida
     shutil.copy(src=pathAudioCreado, dst=PATH_CARPETA_COMPARTIDA)
