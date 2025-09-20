@@ -5,8 +5,8 @@ venv/
 .cache/
 
 # Solo el contenido de la carpeta
-carpetaCompartida/*
-!carpetaCompartida/
+sharedFolder/*
+sharedFolder/
 
 # Ignoramos el .md
 TUTOR.md
