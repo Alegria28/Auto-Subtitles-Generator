@@ -18,7 +18,7 @@ import shutil  # Para copiar archivos
 import json  # Para trabajar con archivos JSON
 import subprocess  # Para ejecutar comandos en terminal
 
-# --- Constantes ---
+# ------ Constantes ------
 FOLDER_NAME = "sharedFolder"
 VIDEO_TXT_NAME = "pathVideo.txt"
 AUDIO_TXT_NAME = "pathAudio.txt"
@@ -35,6 +35,7 @@ CACHE_PATH = os.path.join(BASE_PATH, ".cache")
 
 WINDOW_WIDTH = 1200
 WINDOW_HEIGHT = 900
+
 
 def center_screen(root):
     # Obtenemos el ancho y altura de la pantalla
@@ -79,7 +80,7 @@ if __name__ == "__main__":
         # Se cierra la aplicación si no se pudo encontrar el video
         sys.exit("⚠️ Could not get the video name")
 
-    # ---- Ventana principal ----
+    # ------ Ventana principal ------
 
     # Creamos nuestra ventana
     root = tkinter.Tk()
@@ -88,7 +89,7 @@ if __name__ == "__main__":
     # LLamamos a la función para centrar nuestra ventana
     center_screen(root=root)
 
-    # ---- Estructura de la interfaz ----
+    # ------ Estructura de la interfaz ------
 
     # Frame para los controles (derecha)
     controls_frame = tkinter.Frame(root, width=300, background="lightgrey")
@@ -99,7 +100,7 @@ if __name__ == "__main__":
     video_frame = tkinter.Frame(root, background="black")
     video_frame.pack(side=tkinter.LEFT, fill=tkinter.BOTH, expand=True)
 
-    # ---- Lógica VLC ----
+    # ------ Lógica VLC ------
 
     # Creamos una instancia de VLC
     instance = vlc.Instance(
@@ -111,7 +112,7 @@ if __name__ == "__main__":
     # Variables de control
     is_slider_active = False
 
-    # ---- Funciones de control del reproductor ----
+    # ------ Conjunto de funciones anidadas para el manejo de widgets del programa ------
 
     def pause_video():
         player.pause()
@@ -157,7 +158,7 @@ if __name__ == "__main__":
     def on_slider_press(event):
         # Cuando el usuario hace click en el slider, cambiamos la bandera para que la función
         # actualizarSlider no actualice el slider
-        global is_slider_active  # Accedemos a la bandera anteriormente declarada
+        global is_slider_active  # Accedemos a la bandera anteriormente declarada ya que la queremos modificar
         is_slider_active = True
 
     def on_slider_release(event):
@@ -167,7 +168,7 @@ if __name__ == "__main__":
         set_position(position_slider.get())
 
     def choose_color():
-        # Abrimos una ventana para que el usuario pueda elegir un color, codigoColor
+        # Abrimos una ventana para que el usuario pueda elegir un color, color_code
         # va a ser una tupla que tiene la representación RGB y hexadecimal del color
         color_code = colorchooser.askcolor(title="Choose a color")
 
@@ -177,12 +178,8 @@ if __name__ == "__main__":
             color_variable.set(color_code[1])
             # Cambiamos el color seleccionado en GUI
             color_display.config(background=color_code[1])
-    
-    def on_select(event):
-        # Utilizamos los valores declarados anteriormente
-        global listbox
-        global font_variable
 
+    def on_select(event):
         # Obtenemos el indice del valor seleccionado
         selected_index = listbox.curselection()
 
@@ -193,67 +190,7 @@ if __name__ == "__main__":
             # Guardamos el valor del indice
             font_variable.set(listbox.get(index))
 
-    def generate_subtitles():
-        print("--- GENERATING SUBTITLES WITH THE FOLLOWING OPTIONS ---")
-        print(f"Font: {font_variable.get()}")
-        print(f"Size: {size_variable.get()}")
-        print(f"Color: {color_variable.get()}")
-        print(f"Position: {position_variable.get()}")
-        print(f"AI Model: {ai_model.get()}")
-
-        # Creamos un diccionario con los valores obtenidos
-        dictionary = {
-            "font": font_variable.get(),
-            "size": size_variable.get(),
-            "color": color_variable.get(),
-            "position": position_variable.get(),
-            "aiModel": ai_model.get(),
-            "pathVideo": str(
-                os.path.join(FOLDER_NAME, os.path.basename(host_video_path))
-            ),
-            "pathAudio": str(
-                os.path.join(FOLDER_NAME, os.path.basename(created_audio_path))
-            ),
-        }
-
-        # A partir del diccionario, lo convertimos en JSON
-        json_format = json.dumps(dictionary, indent=4)  # Para que sea mas fácil leerlo
-
-        # Dentro de la carpeta compartida escribimos el JSON, ya que sera leído por el contenedor
-        with open(file=os.path.join(FOLDER_NAME, JSON_NAME), mode="w") as f:
-            f.write(json_format)
-
-        # Creamos el comando completo a ejecutar en la nueva terminal
-        full_command = f"""
-        echo '--- Starting subtitle generation process in Docker ---' && \\
-        docker build -f Dockerfile -t auto-subtitles-generator . && \\
-        docker image prune -f && \\
-        echo '--- Creating container to generate subtitles ---' && \\
-        docker run --rm -it \\
-        -v "{SHARED_FOLDER_PATH}:/autoSubtitlesGenerator/{FOLDER_NAME}" \\
-        -v "{CACHE_PATH}:/root/.cache" \\
-        auto-subtitles-generator && \\
-        echo '--- Process finished, the video with subtitles is in the folder: {FOLDER_NAME} ---' && \\
-        echo '--- You can close this terminal ---' && \\
-        exec bash
-        """
-
-        # Abrimos la nueva terminal que ejecutara los comandos, añadiendo el argumento --geometry para centrar la terminal
-        subprocess.Popen(
-            [
-                "gnome-terminal",
-                "--maximize",
-                "--",
-                "bash",
-                "-c",
-                full_command,
-            ]
-        )
-
-        # Cerramos la ventana de la GUI
-        root.destroy()
-
-    # --- Widgets de control ---
+    # ------ Widgets ------
 
     # Se crea un contenedor que dibuja un borde al rededor, el cual estará dentro del controls_frame
     playback_lf = tkinter.LabelFrame(
@@ -354,7 +291,9 @@ if __name__ == "__main__":
     list_frame = tkinter.Frame(subs_lf, background="lightgrey")
 
     # Creamos un ListBox
-    listbox = tkinter.Listbox(list_frame, height=10, selectmode="single") # Solo se puede seleccionar un item
+    listbox = tkinter.Listbox(
+        list_frame, height=10, selectmode="single"
+    )  # Solo se puede seleccionar un item
 
     # Creamos un scrollbar
     scrollbar = tkinter.Scrollbar(
@@ -364,7 +303,7 @@ if __name__ == "__main__":
     scrollbar.pack(side="right", fill="y")
     # Conectamos la lista con el scroll que creamos
     listbox.config(yscrollcommand=scrollbar.set)
-    # Conectamos la funcion con el evento de que un elemento sea seleccionado
+    # Conectamos el evento de que un elemento sea seleccionado con la funcion
     listbox.bind("<<ListboxSelect>>", on_select)
     # Ahora si empaquetamos este widget
     listbox.pack(fill="both", expand=True)
@@ -383,12 +322,12 @@ if __name__ == "__main__":
     list_frame.pack(fill="both", expand=True)
 
     # Tamaño
-    tkinter.Label(subs_lf, text="Size:", bg="lightgrey").pack(
-        anchor="w", pady=(10, 0)
-    )
+    tkinter.Label(subs_lf, text="Size:", bg="lightgrey").pack(anchor="w", pady=(10, 0))
     # Creamos un SpinBox que es un campo de entrada de números con flechas, diciéndole que va a estar dentro
     # de la sección, con un rango de valores y vinculando el valor con la variable anteriormente creada
-    size_spinbox = tkinter.Spinbox(subs_lf, from_=10, to=100, textvariable=size_variable)
+    size_spinbox = tkinter.Spinbox(
+        subs_lf, from_=10, to=100, textvariable=size_variable
+    )
     size_spinbox.pack(fill=tkinter.X)
 
     # Color
@@ -399,10 +338,10 @@ if __name__ == "__main__":
     # Se crea un botón que va a ejecutar la función antes declarada elegirColor
     color_button = tkinter.Button(color_frame, text="Select", command=choose_color)
     color_button.pack(side=tkinter.LEFT, expand=True, fill=tkinter.X, padx=(0, 5))
-    # Este funcionara como un cuadrito para la vista previa del color
+    # Este funcionara como un cuadro para la vista previa del color
     color_display = tkinter.Label(
         color_frame,
-        bg=color_variable.get(),  # Utilizamos su color de fondo como cuadrito de la vista previa
+        bg=color_variable.get(),  # Utilizamos su color de fondo como cuadro de la vista previa
         width=4,
         relief="sunken",  # Estilo pra que parezca un recuadro
     )
@@ -413,7 +352,7 @@ if __name__ == "__main__":
         anchor="w", pady=(10, 0)
     )
     # Lista de python para almacenar las opciones
-    positions = ["Bottom", "Middle", "Top"]
+    positions = ["Top", "Middle", "Bottom"]
     # Recorremos la lista
     for pos in positions:
         # Se crea un radio button para cada una de las opciones
@@ -428,6 +367,67 @@ if __name__ == "__main__":
         rb.pack(anchor="w")
 
     # Botón de Generar
+
+    def generate_subtitles():
+        print("--- GENERATING SUBTITLES WITH THE FOLLOWING OPTIONS ---")
+        print(f"Font: {font_variable.get()}")
+        print(f"Size: {size_variable.get()}")
+        print(f"Color: {color_variable.get()}")
+        print(f"Position: {position_variable.get()}")
+        print(f"AI Model: {ai_model.get()}")
+
+        # Creamos un diccionario con los valores obtenidos
+        dictionary = {
+            "font": font_variable.get(),
+            "size": size_variable.get(),
+            "color": color_variable.get(),
+            "position": position_variable.get(),
+            "aiModel": ai_model.get(),
+            "pathVideo": str(
+                os.path.join(FOLDER_NAME, os.path.basename(host_video_path))
+            ),
+            "pathAudio": str(
+                os.path.join(FOLDER_NAME, os.path.basename(created_audio_path))
+            ),
+        }
+
+        # A partir del diccionario, lo convertimos en JSON
+        json_format = json.dumps(dictionary, indent=4)  # Para que sea mas fácil leerlo
+
+        # Dentro de la carpeta compartida escribimos el JSON, ya que sera leído por el contenedor
+        with open(file=os.path.join(FOLDER_NAME, JSON_NAME), mode="w") as f:
+            f.write(json_format)
+
+        # Creamos el comando completo a ejecutar en la nueva terminal
+        full_command = f"""
+        echo '--- Starting subtitle generation process in Docker ---' && \\
+        docker build -f Dockerfile -t auto-subtitles-generator . && \\
+        docker image prune -f && \\
+        echo '--- Creating container to generate subtitles ---' && \\
+        docker run --rm -it \\
+        -v "{SHARED_FOLDER_PATH}:/autoSubtitlesGenerator/{FOLDER_NAME}" \\
+        -v "{CACHE_PATH}:/root/.cache" \\
+        auto-subtitles-generator && \\
+        echo '--- Process finished, the video with subtitles is in the folder: {FOLDER_NAME} ---' && \\
+        echo '--- You can close this terminal ---' && \\
+        exec bash
+        """
+
+        # Abrimos la nueva terminal que ejecutara los comandos, añadiendo el argumento --geometry para centrar la terminal
+        subprocess.Popen(
+            [
+                "gnome-terminal",
+                "--maximize",
+                "--",
+                "bash",
+                "-c",
+                full_command,
+            ]
+        )
+
+        # Cerramos la ventana de la GUI
+        root.destroy()
+
     generate_button = tkinter.Button(
         controls_frame,
         text="Generate Subtitles",
@@ -438,7 +438,7 @@ if __name__ == "__main__":
     )
     generate_button.pack(side=tkinter.BOTTOM, fill=tkinter.X, padx=10, pady=10)
 
-    # Creamos una seccion para los ajustes de la aplicacion
+    # Creamos una sección para los ajustes de la aplicación
     settings_lf = tkinter.LabelFrame(
         controls_frame, text="Settings", padx=10, pady=10, bg="lightgrey"
     )
@@ -454,7 +454,7 @@ if __name__ == "__main__":
     ai_menu = tkinter.OptionMenu(settings_lf, ai_model, *ai_models)
     ai_menu.pack(fill=tkinter.X)
 
-    # ---- Procesamiento archivos ----
+    # ------ Procesamiento archivos ------
 
     # Obtenemos el nombre del video
     base_name = os.path.basename(p=host_video_path)
@@ -483,7 +483,7 @@ if __name__ == "__main__":
     # Copiamos el audio a la carpeta compartida
     shutil.copy(src=created_audio_path, dst=SHARED_FOLDER_PATH)
 
-    # ---- Reproducción ----
+    # ------ Reproducción ------
 
     def play_video():
         # Identificamos que sistema de gestión de ventanas se esta usando
@@ -511,7 +511,8 @@ if __name__ == "__main__":
     # Iniciamos el loop principal de la ventana
     root.mainloop()
 
-    # ---- Limpieza ----
+    # ------ Limpieza ------
+
     # Borramos el .mp3 creado
     os.remove(audio_name)
     player.stop()
