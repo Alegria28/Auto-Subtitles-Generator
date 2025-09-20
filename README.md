@@ -1,80 +1,82 @@
-# Generador Automático de Subtítulos
+# Automatic Subtitle Generator
 
-Este proyecto es una herramienta de escritorio para generar subtítulos automáticamente para un archivo de video y luego incrustarlos en el mismo. Utiliza `openai-whisper` para la transcripción de audio a texto, `MoviePy` para la manipulación de video, y `Tkinter` con `python-vlc` para la interfaz gráfica.
+This project is a desktop tool to automatically generate subtitles for a video file and then burn them into it. It uses `openai-whisper` for audio-to-text transcription, `MoviePy` for video manipulation, and `Tkinter` with `python-vlc` for the graphical interface.
 
-## Características
+## Features
 
-*   Interfaz gráfica para seleccionar y previsualizar el video.
-*   Controles de reproducción de video (pausa, barra de progreso, volumen).
-*   Opciones para personalizar la apariencia de los subtítulos (fuente, tamaño, color, posición).
-*   Procesamiento de video en un contenedor Docker para mantener el entorno limpio y reproducible.
+*   Graphical user interface to select and preview the video.
+*   Video playback controls (pause, progress bar, volume).
+*   Options to customize the appearance of subtitles (font, size, color, position).
+*   Selection of the AI model for transcription (`Tiny`, `Base`, `Small`, `Medium`, `Large`, `Turbo`).
+*   Video processing in a Docker container to keep the environment clean and reproducible.
 
-## Requisitos
+## Requirements
 
-*   **Python 3:** Para ejecutar el script de la interfaz.
-*   **Docker:** Para ejecutar el contenedor de procesamiento.
-*   **VLC:** Necesario para la reproducción de video en la interfaz.
+*   **Python 3:** To run the interface script.
+*   **Docker:** To run the processing container.
+*   **VLC:** Required for video playback in the interface.
+*   **GNOME Terminal:** Used to display the Docker process. The script can be adapted for other terminals.
 
-### Dependencias del Sistema
+### System Dependencies
 
-Antes de ejecutar el script local (`main.py`), asegúrate de tener instaladas las siguientes herramientas en tu sistema:
+Before running the local script (`main.py`), make sure you have the following tools installed on your system:
 
-*   **VLC Media Player:** La interfaz gráfica lo utiliza para reproducir el video.
-    *   En Debian/Ubuntu: `sudo apt-get install vlc`
-    *   En macOS (con Homebrew): `brew install vlc`
-    *   En Windows: Descárgalo desde el [sitio oficial](https://www.videolan.org/vlc/).
+*   **VLC Media Player:** The GUI uses it to play the video.
+    *   On Debian/Ubuntu: `sudo apt-get install vlc`
+    *   On macOS (with Homebrew): `brew install vlc`
+    *   On Windows: Download it from the [official site](https://www.videolan.org/vlc/).
 
-*   **Tkinter:** Es la librería para la interfaz gráfica. En muchas instalaciones de Python ya viene incluida, pero en algunas distribuciones de Linux podría necesitarse instalar por separado.
-    *   En Debian/Ubuntu: `sudo apt-get install python3-tk`
+*   **Tkinter:** The library for the graphical interface. It is included in many Python installations, but in some Linux distributions, it may need to be installed separately.
+    *   On Debian/Ubuntu: `sudo apt-get install python3-tk`
 
-## Configuración del Entorno Local
+## Local Environment Setup
 
-Para configurar el entorno y las dependencias del proyecto, se ha proporcionado un script de instalación automatizado.
+An automated installation script is provided to configure the project's environment and dependencies.
 
-### Instalación Automática (Linux/macOS)
+### Automatic Installation (Linux/macOS)
 
-Para usuarios de Linux y macOS, simplemente ejecuta el siguiente comando desde la raíz del proyecto. Este script creará un entorno virtual, lo activará e instalará todas las librerías necesarias.
+For Linux and macOS users, simply run the following command from the project root. This script will create a virtual environment, activate it, and install all the necessary libraries.
 
-**Importante:** Debes ejecutar el script usando el comando `source` para que el entorno virtual se active correctamente en tu terminal.
+**Important:** You must run the script using the `source` command for the virtual environment to be activated correctly in your terminal.
 
 ```bash
 source setup.sh
 ```
 
-> **¿Por qué `source`?**
-> Es crucial usar `source setup.sh` (o su atajo `. setup.sh`) en lugar de `./setup.sh`. Al usar `source`, el script modifica tu sesión de terminal actual, activando el entorno virtual en ella. Si lo ejecutas como `./setup.sh`, el entorno solo se activará en un proceso temporal que se cierra al terminar el script, y no tendrá efecto en tu terminal.
+> **Why `source`?**
+> It is crucial to use `source setup.sh` (or its shortcut `. setup.sh`) instead of `./setup.sh`. By using `source`, the script modifies your current terminal session, activating the virtual environment in it. If you run it as `./setup.sh`, the environment will only be activated in a temporary process that closes when the script finishes, and it will have no effect on your terminal.
 
-Una vez ejecutado, verás que el nombre del entorno (`venv`) aparece al inicio de la línea de tu terminal, indicando que está activo y listo para usarse.
+Once executed, you will see the environment name (`venv`) appear at the beginning of your terminal line, indicating that it is active and ready to use.
 
-## Pasos para Generar un Video
+## Steps to Generate a Video
 
-Sigue estos pasos en orden para generar un video con subtítulos:
+Follow these steps in order to generate a video with subtitles:
 
-### 1. Ejecutar la Aplicación Principal
+### 1. Run the Main Application
 
-Asegúrate de tener el entorno virtual activado si seguiste los pasos de configuración. Luego, ejecuta el script de la interfaz:
+Make sure you have the virtual environment activated if you followed the setup steps. Then, run the interface script:
 
 ```bash
 python main.py
 ```
 
-### 2. Seleccionar Video y Configurar Subtítulos
+### 2. Select Video and Configure Subtitles
 
-Al iniciar, se abrirá una ventana para que selecciones el archivo de video. Una vez seleccionado, la aplicación mostrará el video y las opciones para configurar los subtítulos.
+When you start the application, a window will open for you to select the video file. Once selected, the application will display the video and the options to configure the subtitles.
 
-Usa la interfaz para ajustar las opciones de los subtítulos como fuente, tamaño, color y posición.
+Use the interface to adjust subtitle options such as font, size, color, position, and the AI model.
 
-### 3. Generar el Video
+### 3. Generate the Video
 
-Cuando estés listo, haz clic en el botón **"Generar Subtítulos"**.
+When you are ready, click the **"Generate Subtitles"** button.
 
-Esto abrirá una nueva ventana de terminal que automatiza todo el proceso:
-1.  **Construye la imagen de Docker** (`docker build`).
-2.  **Ejecuta el contenedor** (`docker run`) para procesar el video.
-3.  **Muestra el progreso** de la transcripción y la generación del video.
+This will open a new terminal window that automates the entire process:
+1.  **Builds the Docker image** (`docker build`).
+2.  **Runs the container** (`docker run`) to process the video.
+3.  **Displays the progress** of the transcription and video generation.
 
-El proceso de transcripción puede tardar varios minutos, dependiendo de la duración del video y la potencia de tu máquina.
+The transcription process can take several minutes, depending on the length of the video and the power of your machine.
 
-### 4. Obtener el Resultado
+### 4. Get the Result
 
-¡Listo! Cuando el proceso en la nueva terminal termine, encontrarás el video final con los subtítulos incrustados en `carpetaCompartida/videoConSubtitulos.mp4`.
+Done! When the process in the new terminal finishes, you will find the final video with the embedded subtitles in `sharedFolder/videoWithSubtitles.mp4`.
