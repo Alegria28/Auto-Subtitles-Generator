@@ -188,6 +188,7 @@ if __name__ == "__main__":
         print(f"Tamaño: {sizeVariable.get()}")
         print(f"Color: {colorVariable.get()}")
         print(f"Posición: {positionVariable.get()}")
+        print(f"Modelo de IA: {modeloAi.get()}")
 
         # Creamos un diccionario con los valores obtenidos
         diccionario = {
@@ -195,6 +196,7 @@ if __name__ == "__main__":
             "size": sizeVariable.get(),
             "color": colorVariable.get(),
             "position": positionVariable.get(),
+            "aiModel": modeloAi.get(),
             "pathVideo": str(
                 os.path.join(NOMBRE_CARPETA, os.path.basename(pathVideoHost))
             ),
@@ -293,6 +295,7 @@ if __name__ == "__main__":
     sizeVariable = tkinter.IntVar(root, 30)
     positionVariable = tkinter.StringVar(root, "Abajo")
     colorVariable = tkinter.StringVar(root, "#FFFFFF")
+    modeloAi = tkinter.StringVar(root, "Medium")
 
     # Creamos otra sección de opciones de subtítulos dentro del frame de controles
     subs_lf = tkinter.LabelFrame(
@@ -395,6 +398,22 @@ if __name__ == "__main__":
         font=("Arial", 10, "bold"),
     )
     generate_button.pack(side=tkinter.BOTTOM, fill=tkinter.X, padx=10, pady=10)
+
+    # Creamos una seccion para los ajustes de la aplicacion
+    settings_lf = tkinter.LabelFrame(
+        controls_frame, text="Ajustes", padx=10, pady=10, bg="lightgrey"
+    )
+    # Lo posicionamos en el contenedor
+    settings_lf.pack(pady=10, padx=10, fill=tkinter.X)
+
+    # Modelo de IA
+    tkinter.Label(settings_lf, text="Modelo de IA:", bg="lightgrey").pack(anchor="w")
+    # Lista de python con los modelos disponibles
+    ai_models = ["Tiny", "Base", "Small", "Medium", "Large", "Turbo"]
+    # Se crea un menu dentro de la nueva sección, vinculando la variable fontVariable y desempaquetando
+    # la lista al momento de pasarlo como parámetro
+    ai_menu = tkinter.OptionMenu(settings_lf, modeloAi, *ai_models)
+    ai_menu.pack(fill=tkinter.X)
 
     # ---- Procesamiento archivos ----
 

@@ -24,6 +24,15 @@ PATH_VIDEO_SALIDA = os.path.join(NOMBRE_CARPETA_COMPARTIDA, "videoConSubtitulos.
 
 # Diccionario para mapear posiciones de GUI a valores de moviepy
 POSICIONES = {"Abajo": "bottom", "Medio": "center", "Arriba": "top"}
+# Diccionario para mapear los modelos de AI
+AI_MODELS = {
+    "Tiny": "tiny",
+    "Base": "base",
+    "Small": "small",
+    "Medium": "medium",
+    "Large": "large",
+    "Turbo": "turbo",
+}
 
 
 # Diccionario para mapear nombres de fuentes a archivos .ttf
@@ -147,6 +156,7 @@ if __name__ == "__main__":
     nombreFuente = caracteristicasJson["font"]
     pathVideoEnCarpeta = caracteristicasJson["pathVideo"]
     pathAudioEnCarpeta = caracteristicasJson["pathAudio"]
+    modeloAI = AI_MODELS[caracteristicasJson["aiModel"]]
 
     # --- Procesamiento ---
 
@@ -164,7 +174,7 @@ if __name__ == "__main__":
 
     # Especificamos el modelo de Whisper
     # model = whisper.load_model("large-v3")
-    model = whisper.load_model("medium")
+    model = whisper.load_model(modeloAI)
 
     # Mostramos mensaje y después esperamos antes de realizar la transcripción
     print("📝 Generando transcripción")
