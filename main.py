@@ -1,7 +1,5 @@
 # cspell:disable
 
-# Información sobre los módulos: https://shorturl.at/slHUh
-
 # Importamos los módulos
 import tkinter  # Para trabajar con UI
 import vlc  # Para reproducir el video
@@ -38,9 +36,7 @@ PATH_CACHE = os.path.join(PATH_BASE, ".cache")
 ANCHOVENTANA = 1200
 ALTURAVENTANA = 900
 
-
 def centrarPantalla(root):
-
     # Obtenemos el ancho y altura de la pantalla
     anchoPantalla = root.winfo_screenwidth()
     alturaPantalla = root.winfo_screenheight()
@@ -128,7 +124,7 @@ if __name__ == "__main__":
         if reproductor.get_media():
             # Convertimos el valor de entrada (que esta entre 0 y 1000) a un valor entre 0 y 1
             pos = int(posicion) / 1000.0
-            # Establecemos la posicion
+            # Establecemos la posición
             reproductor.set_position(pos)
             # Si no se está reproduciendo, le damos a play
             if not reproductor.is_playing():
@@ -141,7 +137,7 @@ if __name__ == "__main__":
         if not isSliderActive:
             # Obtenemos el estado del video, para ver si se esta reproduciendo
             isPlaying = reproductor.is_playing()
-            # Si no se esta reproduciendo, entonces el boton va a decir pausa
+            # Si no se esta reproduciendo, entonces el botón va a decir pausa
             pause_button.config(text="Reproducir" if not isPlaying else "Pausa")
 
             # Si se esta reproduciendo
@@ -181,6 +177,21 @@ if __name__ == "__main__":
             colorVariable.set(codigoColor[1])
             # Cambiamos el color seleccionado en GUI
             color_display.config(background=codigoColor[1])
+    
+    def on_select(event):
+        # Utilizamos los valores declarados anteriormente
+        global listbox
+        global fontVariable
+
+        # Obtenemos el indice del valor seleccionado
+        indiceSeleccionado = listbox.curselection()
+
+        # Si hay un font seleccionado
+        if indiceSeleccionado:
+            # Obtenemos el indice
+            indice = indiceSeleccionado[0]
+            # Guardamos el valor del indice
+            fontVariable.set(listbox.get(indice))
 
     def generate_subtitles():
         print("--- GENERANDO SUBTÍTULOS CON LAS SIGUIENTES OPCIONES ---")
@@ -206,7 +217,7 @@ if __name__ == "__main__":
         }
 
         # A partir del diccionario, lo convertimos en JSON
-        formatoJson = json.dumps(diccionario, indent=4)  # Para que sea mas facil leerlo
+        formatoJson = json.dumps(diccionario, indent=4)  # Para que sea mas fácil leerlo
 
         # Dentro de la carpeta compartida escribimos el JSON, ya que sera leído por el contenedor
         with open(file=os.path.join(NOMBRE_CARPETA, NOMBRE_JSON), mode="w") as f:
@@ -227,7 +238,7 @@ if __name__ == "__main__":
         exec bash
         """
 
-        # Abrimos la nueva terminal que ejecutara los comandos, añagiendo el argumento --geometry para centrar la terminal
+        # Abrimos la nueva terminal que ejecutara los comandos, añadiendo el argumento --geometry para centrar la terminal
         subprocess.Popen(
             [
                 "gnome-terminal",
@@ -269,7 +280,7 @@ if __name__ == "__main__":
 
     # Se posiciona dentro del contenedor
     position_slider.pack(fill=tkinter.X, pady=(5, 0))
-    # Asociamos los eventos del raton con las funciones antes creadas
+    # Asociamos los eventos del ratón con las funciones antes creadas
     position_slider.bind("<ButtonPress-1>", on_slider_press)
     position_slider.bind("<ButtonRelease-1>", on_slider_release)
 
@@ -338,10 +349,38 @@ if __name__ == "__main__":
         "Verdana Bold Italic",
         "Webdings",
     ]
-    # Se crea un menu dentro de la nueva sección, vinculando la variable fontVariable y desempaquetando
-    # la lista al momento de pasarlo como parámetro
-    font_menu = tkinter.OptionMenu(subs_lf, fontVariable, *fonts)
-    font_menu.pack(fill=tkinter.X)
+
+    # Frame para la lista
+    list_frame = tkinter.Frame(subs_lf, background="lightgrey")
+
+    # Creamos un ListBox
+    listbox = tkinter.Listbox(list_frame, height=10, selectmode="single") # Solo se puede seleccionar un item
+
+    # Creamos un scrollbar
+    scrollbar = tkinter.Scrollbar(
+        list_frame, orient=tkinter.VERTICAL, command=listbox.yview
+    )
+    # Lo agregamos del lado derecho y que tome todo el espacio de Y
+    scrollbar.pack(side="right", fill="y")
+    # Conectamos la lista con el scroll que creamos
+    listbox.config(yscrollcommand=scrollbar.set)
+    # Conectamos la funcion con el evento de que un elemento sea seleccionado
+    listbox.bind("<<ListboxSelect>>", on_select)
+    # Ahora si empaquetamos este widget
+    listbox.pack(fill="both", expand=True)
+
+    # Agregamos las fuentes a la lista
+    for font in fonts:
+        listbox.insert(tkinter.END, font)
+
+    # Buscamos en la lista el indice en el que esta nuestra variable
+    indiceSeleccion = fonts.index(fontVariable.get())
+
+    # Seleccionamos en la lista lo que tiene la variable
+    listbox.selection_set(indiceSeleccion)
+
+    # Tras insertar valores ahora si empaquetamos el widget
+    list_frame.pack(fill="both", expand=True)
 
     # Tamaño
     tkinter.Label(subs_lf, text="Tamaño:", bg="lightgrey").pack(
@@ -360,7 +399,7 @@ if __name__ == "__main__":
     # Se crea un botón que va a ejecutar la función antes declarada elegirColor
     color_button = tkinter.Button(color_frame, text="Seleccionar", command=elegirColor)
     color_button.pack(side=tkinter.LEFT, expand=True, fill=tkinter.X, padx=(0, 5))
-    # Este funcionara como un cuadrito parala vista previa del color
+    # Este funcionara como un cuadrito para la vista previa del color
     color_display = tkinter.Label(
         color_frame,
         bg=colorVariable.get(),  # Utilizamos su color de fondo como cuadrito de la vista previa

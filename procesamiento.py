@@ -170,7 +170,7 @@ if __name__ == "__main__":
     # Cargamos el video
     video = VideoFileClip(pathVideo)
 
-    print("🧠 Cargando modelo IA")
+    print("🧠 Descargando y/o cargando modelo de IA")
 
     # Especificamos el modelo de Whisper
     # model = whisper.load_model("large-v3")

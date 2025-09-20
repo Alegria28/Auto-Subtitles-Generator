@@ -8,6 +8,9 @@ venv/
 carpetaCompartida/*
 !carpetaCompartida/
 
+# Ignoramos el .md
+TUTOR.md
+
 # Ficheros de cache de Python
 __pycache__/
 *.pyc
