@@ -1,21 +1,21 @@
-# Automatic Subtitle Generator
+# 🎬 Automatic Subtitle Generator
 
-This project is a desktop tool to automatically generate subtitles for a video file and then burn them into it. It uses `openai-whisper` for audio-to-text transcription, `MoviePy` for video manipulation, and `Tkinter` with `python-vlc` for the graphical interface.
+This project is a desktop tool to automatically generate subtitles for a video file and then burn them into it. It uses `openai-whisper` for audio-to-text transcription, `MoviePy` for video manipulation, and `Tkinter` with `python-vlc` for the graphical interface. 🎥
 
-## Features
+## ✨ Features
 
-*   Graphical user interface to select and preview the video.
-*   Video playback controls (pause, progress bar, volume).
-*   Options to customize the appearance of subtitles (font, size, color, position).
-*   Selection of the AI model for transcription (`Tiny`, `Base`, `Small`, `Medium`, `Large`, `Turbo`).
-*   Video processing in a Docker container to keep the environment clean and reproducible.
+*   🖼️ Graphical user interface to select and preview the video.
+*   ⏯️ Video playback controls (pause, progress bar, volume).
+*   🎨 Options to customize the appearance of subtitles (font, size, color, position).
+*   🤖 Selection of the AI model for transcription (`Tiny`, `Base`, `Small`, `Medium`, `Large`, `Turbo`).
+*   📦 Video processing in a Docker container to keep the environment clean and reproducible.
 
-## Requirements
+## 🛠️ Requirements
 
-*   **Python 3:** To run the interface script.
-*   **Docker:** To run the processing container.
-*   **VLC:** Required for video playback in the interface.
-*   **GNOME Terminal:** Used to display the Docker process. The script can be adapted for other terminals.
+*   **Python 3:** To run the interface script. 🐍
+*   **Docker:** To run the processing container. 🐳
+*   **VLC:** Required for video playback in the interface. 📼
+*   **GNOME Terminal:** Used to display the Docker process. The script can be adapted for other terminals. 💻
 
 ### System Dependencies
 
@@ -29,7 +29,7 @@ Before running the local script (`main.py`), make sure you have the following to
 *   **Tkinter:** The library for the graphical interface. It is included in many Python installations, but in some Linux distributions, it may need to be installed separately.
     *   On Debian/Ubuntu: `sudo apt-get install python3-tk`
 
-## Local Environment Setup
+## 🚀 Local Environment Setup
 
 An automated installation script is provided to configure the project's environment and dependencies.
 
@@ -43,12 +43,12 @@ For Linux and macOS users, simply run the following command from the project roo
 source setup.sh
 ```
 
-> **Why `source`?**
+> **🤔 Why `source`?**
 > It is crucial to use `source setup.sh` (or its shortcut `. setup.sh`) instead of `./setup.sh`. By using `source`, the script modifies your current terminal session, activating the virtual environment in it. If you run it as `./setup.sh`, the environment will only be activated in a temporary process that closes when the script finishes, and it will have no effect on your terminal.
 
 Once executed, you will see the environment name (`venv`) appear at the beginning of your terminal line, indicating that it is active and ready to use.
 
-## Steps to Generate a Video
+## 📝 Steps to Generate a Video
 
 Follow these steps in order to generate a video with subtitles:
 
@@ -75,8 +75,8 @@ This will open a new terminal window that automates the entire process:
 2.  **Runs the container** (`docker run`) to process the video.
 3.  **Displays the progress** of the transcription and video generation.
 
-The transcription process can take several minutes, depending on the length of the video and the power of your machine.
+The transcription process can take several minutes, depending on the length of the video and the power of your machine. ⏳
 
 ### 4. Get the Result
 
-Done! When the process in the new terminal finishes, you will find the final video with the embedded subtitles in `sharedFolder/videoWithSubtitles.mp4`.
+Done! 🎉 When the process in the new terminal finishes, you will find the final video with the embedded subtitles in `sharedFolder/videoWithSubtitles.mp4`.
