@@ -24,8 +24,23 @@ else
     echo "🐍 pyenv is already installed."
 fi
 
+# Leemos la versión de Python requerida y la instalamos con pyenv si es necesario
+echo "🐍 Checking Python version with pyenv..."
+required_version=$(cat .python-version)
+
+if ! pyenv versions --bare | grep -q "^${required_version}$"; 
+then
+    echo "🐍 Python ${required_version} not found. Installing with pyenv (this may take a few minutes)..."
+    pyenv install "$required_version"
+else
+    echo "✅ Python ${required_version} is already installed with pyenv."
+fi
+
+# Establecemos la versión de Python para este proyecto
+pyenv local "$required_version"
+
 # Verificamos si tenemos el modulo venv instalado
-if ! python3 -c 'import venv' &> /dev/null
+if ! python -c 'import venv' &> /dev/null
 then
     echo "🔍 venv module not found, installing..."
     sudo apt install python3-venv
@@ -37,7 +52,7 @@ fi
 if [ ! -n "$VIRTUAL_ENV" ]; 
 then
     echo "📦 Creating virtual environment"
-    python3 -m venv venv
+    python -m venv venv
 fi
 
 # Activamos el entorno virtual
@@ -45,7 +60,7 @@ echo "🔧 Activating virtual environment"
 source venv/bin/activate
 
 # Verificamos si tenemos el modulo tkinter instalado
-if ! python3 -c 'import tkinter' &> /dev/null
+if ! python -c 'import tkinter' &> /dev/null
 then
     echo "🔍 tkinter module not found, installing..."
     sudo apt install python3-tk
