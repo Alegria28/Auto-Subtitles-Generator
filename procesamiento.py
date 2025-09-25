@@ -16,11 +16,7 @@ import json
 
 # ------ Constantes ------
 SHARED_FOLDER_PATH = "/autoSubtitlesGenerator/sharedFolder"
-VIDEO_TXT_NAME = "pathVideo.txt"
-AUDIO_TXT_NAME = "pathAudio.txt"
 JSON_NAME = "videoFeatures.json"
-
-OUTPUT_VIDEO_PATH = os.path.join(SHARED_FOLDER_PATH, "videoWithSubtitles.mp4")
 
 # Diccionario para mapear posiciones de GUI a valores de moviepy
 POSITIONS = {"Bottom": "bottom", "Middle": "center", "Top": "top"}
@@ -93,8 +89,7 @@ def create_text_clip(word, duration, color, font_size, font_name):
     # En caso de que esta no se haya podido cargar
     except Exception as e:
         print(
-            "The specified font was not found, the default font will be used "
-            + str(e)
+            "The specified font was not found, the default font will be used " + str(e)
         )
         font = ImageFont.load_default()
 
@@ -154,9 +149,10 @@ if __name__ == "__main__":
     font_color = convert_rgb(features_json["color"])
     # Obtenemos el nombre de la fuente
     font_name = features_json["font"]
-    video_path_in_folder = features_json["pathVideo"]
-    audio_path_in_folder = features_json["pathAudio"]
-    ai_model = AI_MODELS[features_json["aiModel"]]
+    ai_model = AI_MODELS[features_json["ai_model"]]
+    video_path_in_folder = features_json["video_path"]
+    audio_path_in_folder = features_json["audio_path"]
+    video_name, video_extension = features_json["video_name"]
 
     # --- Procesamiento ---
 
@@ -225,7 +221,10 @@ if __name__ == "__main__":
     # Superponemos los clips de texto sobre el video
     final_video = CompositeVideoClip([video] + subtitles)
 
+    # We use the original video name adding "-subtitled" just before the file extension
+    output_video_path = os.path.join(SHARED_FOLDER_PATH, video_name + "-subtitled" + video_extension)
+
     # Creamos el video, especificando la ruta de la carpeta compartida
-    final_video.write_videofile(OUTPUT_VIDEO_PATH, codec="libx264")
+    final_video.write_videofile(output_video_path, codec="libx264")
 
     print("🎥 Video generated")

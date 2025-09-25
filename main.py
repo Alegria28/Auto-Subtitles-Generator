@@ -382,13 +382,12 @@ if __name__ == "__main__":
             "size": size_variable.get(),
             "color": color_variable.get(),
             "position": position_variable.get(),
-            "aiModel": ai_model.get(),
-            "pathVideo": str(
-                os.path.join(FOLDER_NAME, os.path.basename(host_video_path))
+            "ai_model": ai_model.get(),
+            "video_path": os.path.join(FOLDER_NAME, os.path.basename(host_video_path)),
+            "audio_path": os.path.join(
+                FOLDER_NAME, os.path.basename(created_audio_path)
             ),
-            "pathAudio": str(
-                os.path.join(FOLDER_NAME, os.path.basename(created_audio_path))
-            ),
+            "video_name": os.path.splitext(os.path.basename(host_video_path)),
         }
 
         # A partir del diccionario, lo convertimos en JSON
