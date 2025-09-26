@@ -92,13 +92,22 @@ if __name__ == "__main__":
     # ------ Estructura de la interfaz ------
 
     # Frame para los controles (derecha)
-    controls_frame = tkinter.Frame(root, width=300, background="lightgrey")
+    controls_frame = tkinter.Frame(root, width=300, background="")
     controls_frame.pack(side=tkinter.RIGHT, fill=tkinter.Y)
     controls_frame.pack_propagate(False)  # Para que no cambie de tamaño el frame
 
     # Frame para el video (izquierda)
     video_frame = tkinter.Frame(root, background="black")
     video_frame.pack(side=tkinter.LEFT, fill=tkinter.BOTH, expand=True)
+
+    # ------ Canvas sobre el video ------
+    canvas = tkinter.Canvas(video_frame) 
+
+    coord = 10, 10, 300, 300
+    arc = canvas.create_arc(coord, start=0, extent=150, fill="red")
+    arv2 = canvas.create_arc(coord, start=150, extent=215, fill="green")
+
+    canvas.pack(fill=tkinter.BOTH)
 
     # ------ Lógica VLC ------
 
