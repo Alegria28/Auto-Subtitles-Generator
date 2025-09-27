@@ -1,5 +1,3 @@
-# cspell:disable
-
 # Importamos los módulos
 import tkinter  # Para trabajar con UI
 import vlc  # Para reproducir el video
@@ -100,15 +98,6 @@ if __name__ == "__main__":
     video_frame = tkinter.Frame(root, background="black")
     video_frame.pack(side=tkinter.LEFT, fill=tkinter.BOTH, expand=True)
 
-    # ------ Canvas sobre el video ------
-    canvas = tkinter.Canvas(video_frame) 
-
-    coord = 10, 10, 300, 300
-    arc = canvas.create_arc(coord, start=0, extent=150, fill="red")
-    arv2 = canvas.create_arc(coord, start=150, extent=215, fill="green")
-
-    canvas.pack(fill=tkinter.BOTH)
-
     # ------ Lógica VLC ------
 
     # Creamos una instancia de VLC
@@ -120,6 +109,11 @@ if __name__ == "__main__":
 
     # Variables de control
     is_slider_active = False
+
+    # ------ Lógica VLC ------
+
+    player.video_set_marquee_string(vlc.VideoMarqueeOption.Text, "Prueba")
+    player.video_set_marquee_int(vlc.VideoMarqueeOption.Enable, 1)
 
     # ------ Conjunto de funciones anidadas para el manejo de widgets del programa ------
 
