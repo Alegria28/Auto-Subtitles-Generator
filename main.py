@@ -9,6 +9,9 @@ from tkinter import colorchooser
 # Del modulo moviepy en el sub-modulo editor, importamos la clase
 from moviepy.editor import VideoFileClip
 
+# We import the class
+from classes.SubtitleASSManager import SubtitleASSManager
+
 # Módulos de la biblioteca estándar
 import sys  # Para poder salir del programa
 import os  # Para trabajar con rutas
@@ -94,8 +97,86 @@ if __name__ == "__main__":
     controls_frame.pack(side=tkinter.RIGHT, fill=tkinter.Y)
     controls_frame.pack_propagate(False)  # Para que no cambie de tamaño el frame
 
+    def on_video_click(event):
+        # We get the size of the frame
+        display_w = video_frame.winfo_width()
+        display_h = video_frame.winfo_height()
+
+        if display_w == 0 or display_h == 0:
+            return
+
+        # We get the size of the video (resolution)
+        video_w, video_h = video.size
+
+        # Scales and offsets
+        scale = min(display_w / video_w, display_h / video_h)
+        rendered_w = video_w * scale
+        rendered_h = video_h * scale
+        offset_x = (display_w - rendered_w) / 2
+        offset_y = (display_h - rendered_h) / 2
+
+        # Coordinates inside the frame (pixels)
+        x_px = event.x
+        y_px = event.y
+
+        # Relative coordinates inside rendered video area
+        x_render = x_px - offset_x
+        y_render = y_px - offset_y
+
+        # Coordinates should not be outside the video
+        x_render = max(0, min(rendered_w, x_render))
+        y_render = max(0, min(rendered_h, y_render))
+
+        # Coordinates conversion to video pixels
+        if rendered_w > 0 and rendered_h > 0:
+            x_video_px = int((x_render / rendered_w) * video_w)
+            y_video_px = int((y_render / rendered_h) * video_h)
+        else:
+            return
+
+        # Status update
+        position_variable.set("Custom")
+
+        # Instance update
+        ass_manager.set_position_norm(x_video_px / video_w, y_video_px / video_h)
+
+        # ---- Marquee test ----
+        try:
+            # Texto y activación
+            player.video_set_marquee_string(vlc.VideoMarqueeOption.Text, "Prueba")
+            # X/Y esperan coordenadas en pixeles del video en la mayoría de versiones
+            player.video_set_marquee_int(vlc.VideoMarqueeOption.X, x_video_px)
+            player.video_set_marquee_int(vlc.VideoMarqueeOption.Y, y_video_px)
+            # tamaño aproximado (puedes ajustar con size_variable)
+            try:
+                player.video_set_marquee_int(
+                    vlc.VideoMarqueeOption.Size, int(size_variable.get())
+                )
+            except Exception:
+                pass
+            # color: intenta enviar "0xRRGGBB" si tienes #RRGGBB en color_variable
+            try:
+                col = color_variable.get()  # "#RRGGBB"
+                if col and col.startswith("#"):
+                    player.video_set_marquee_string(
+                        vlc.VideoMarqueeOption.Color, f"0x{col.lstrip('#').upper()}"
+                    )
+                else:
+                    player.video_set_marquee_string(vlc.VideoMarqueeOption.Color, col)
+            except Exception:
+                pass
+            # activar
+            player.video_set_marquee_int(vlc.VideoMarqueeOption.Enable, 1)
+        except Exception as e:
+            print("Marquee test failed:", e)
+
+        print(
+            f"Clicked at px=({x_px},{y_px}), video_px=({x_video_px},{y_video_px}), norm=({x_video_px/video_w:.3f},{y_video_px/video_h:.3f})"
+        )
+
     # Frame para el video (izquierda)
     video_frame = tkinter.Frame(root, background="black")
+    video_frame.bind("<Button-1>", on_video_click)
     video_frame.pack(side=tkinter.LEFT, fill=tkinter.BOTH, expand=True)
 
     # ------ Lógica VLC ------
@@ -109,11 +190,6 @@ if __name__ == "__main__":
 
     # Variables de control
     is_slider_active = False
-
-    # ------ Lógica VLC ------
-
-    player.video_set_marquee_string(vlc.VideoMarqueeOption.Text, "Prueba")
-    player.video_set_marquee_int(vlc.VideoMarqueeOption.Enable, 1)
 
     # ------ Conjunto de funciones anidadas para el manejo de widgets del programa ------
 
@@ -181,6 +257,8 @@ if __name__ == "__main__":
             color_variable.set(color_code[1])
             # Cambiamos el color seleccionado en GUI
             color_display.config(background=color_code[1])
+            # We update our instance
+            ass_manager.color = color_code[1]
 
     def on_select(event):
         # Obtenemos el indice del valor seleccionado
@@ -192,6 +270,8 @@ if __name__ == "__main__":
             index = selected_index[0]
             # Guardamos el valor del indice
             font_variable.set(listbox.get(index))
+            # We update our instance
+            update_font()
 
     # ------ Widgets ------
 
@@ -240,13 +320,27 @@ if __name__ == "__main__":
     # Se posiciona dentro del contenedor
     volume_slider.pack(fill=tkinter.X, pady=(5, 0))
 
-    # --- Variables y widgets de subtítulos
+    # ------ Variables y widgets de subtítulos ------
 
     font_variable = tkinter.StringVar(root, "Arial")
     size_variable = tkinter.IntVar(root, 30)
     position_variable = tkinter.StringVar(root, "Bottom")
     color_variable = tkinter.StringVar(root, "#FFFFFF")
     ai_model = tkinter.StringVar(root, "Medium")
+
+    # ------ SubtitleASSManager instance ------
+
+    ass_manager = SubtitleASSManager(
+        font_variable.get(), size_variable.get(), color_variable.get(), player
+    )
+
+    # ------ Nested functions to update SubtitleASSManager instance ------
+
+    def update_size():
+        ass_manager.size = int(size_variable.get())
+
+    def update_font():
+        ass_manager.font = font_variable.get()
 
     # Creamos otra sección de opciones de subtítulos dentro del frame de controles
     subs_lf = tkinter.LabelFrame(
@@ -295,8 +389,8 @@ if __name__ == "__main__":
 
     # Creamos un ListBox
     listbox = tkinter.Listbox(
-        list_frame, height=10, selectmode="single"
-    )  # Solo se puede seleccionar un item
+        list_frame, height=10, selectmode="single"  # Solo se puede seleccionar un item
+    )
 
     # Creamos un scrollbar
     scrollbar = tkinter.Scrollbar(
@@ -327,9 +421,10 @@ if __name__ == "__main__":
     # Tamaño
     tkinter.Label(subs_lf, text="Size:", bg="lightgrey").pack(anchor="w", pady=(10, 0))
     # Creamos un SpinBox que es un campo de entrada de números con flechas, diciéndole que va a estar dentro
-    # de la sección, con un rango de valores y vinculando el valor con la variable anteriormente creada
+    # de la sección, con un rango de valores y vinculando el valor con la variable anteriormente creada, ademas llamando
+    # a la funcion update_size() cada vez que se cambia el valor
     size_spinbox = tkinter.Spinbox(
-        subs_lf, from_=10, to=100, textvariable=size_variable
+        subs_lf, from_=10, to=100, textvariable=size_variable, command=update_size
     )
     size_spinbox.pack(fill=tkinter.X)
 
@@ -355,7 +450,7 @@ if __name__ == "__main__":
         anchor="w", pady=(10, 0)
     )
     # Lista de python para almacenar las opciones
-    positions = ["Top", "Middle", "Bottom"]
+    positions = ["Top", "Middle", "Bottom", "Custom"]
     # Recorremos la lista
     for pos in positions:
         # Se crea un radio button para cada una de las opciones
