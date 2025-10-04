@@ -143,9 +143,7 @@ if __name__ == "__main__":
 
     # Obtenemos los valores con los que vamos a trabajar
     font_size = features_json["size"]  # El tamaño lo trabajamos asi
-    font_position = POSITIONS[
-        features_json["position"]
-    ]  # Hacemos la conversion necesaria para poder utilizar el valor correcto
+    position_name = features_json["position"]
     font_color = convert_rgb(features_json["color"])
     # Obtenemos el nombre de la fuente
     font_name = features_json["font"]
@@ -166,6 +164,15 @@ if __name__ == "__main__":
     # Cargamos el video
     video = VideoFileClip(video_path)
 
+    # Handle position setting
+    if position_name == "Custom":
+        # Use normalized coordinates for custom positioning
+        x_pos_center = features_json.get("x_pos", 0.5)  # This is the desired CENTER X
+        y_pos_center = features_json.get("y_pos", 0.8)  # This is the desired CENTER Y
+    else:
+        # Use predefined positions for Top, Middle, Bottom
+        font_position = POSITIONS.get(position_name)
+
     print("🧠 Downloading and/or loading AI model")
 
     # Especificamos el modelo de Whisper
@@ -181,7 +188,56 @@ if __name__ == "__main__":
         word_timestamps=True,  # Tiempo para cada palabra
     )
 
-    print("📝 Generating text clips")
+    # --- Transcription Review Step ---
+    print("\n--- TRANSCRIPTION REVIEW ---")
+    
+    # Flatten the list of words from all segments
+    all_words_info = []
+    for segment in result["segments"]:
+        if "words" in segment:
+            all_words_info.extend(segment["words"])
+
+    while True:
+        # Display all words with numbers in a continuous line for better readability
+        print("\nCurrent transcription:")
+        
+        line_of_text = []
+        for i, word_info in enumerate(all_words_info):
+            line_of_text.append(f"{word_info['word']}({i + 1})")
+        
+        print(' '.join(line_of_text))
+        
+        print("\n\nOptions:") # Added extra newline for spacing
+        print("  - Enter a number to correct a word.")
+        print("  - Type 'c' to continue with video generation.")
+        
+        choice = input("Your choice: ").strip().lower()
+
+        if choice == 'c':
+            print("✅ Continuing with the corrected transcription.")
+            break
+        
+        try:
+            word_index = int(choice) - 1
+            if 0 <= word_index < len(all_words_info):
+                original_word = all_words_info[word_index]['word']
+                new_word = input(f"Enter the new word for '{original_word}': ").strip()
+                all_words_info[word_index]['word'] = new_word
+                print(f"✅ Word {word_index + 1} updated to '{new_word}'.")
+            else:
+                print("❌ Invalid number. Please try again.")
+        except ValueError:
+            print("❌ Invalid input. Please enter a number or 'c'.")
+
+    # Re-assign the corrected words back to the original result structure
+    word_iter = iter(all_words_info)
+    for segment in result["segments"]:
+        if "words" in segment:
+            for i in range(len(segment["words"])):
+                segment["words"][i] = next(word_iter)
+
+
+    print("\n📝 Generating text clips")
 
     # Lista que va a guardar los clip de textos del subtitulo
     subtitles = []
@@ -189,17 +245,11 @@ if __name__ == "__main__":
     # Mostramos la information
     for segment in result["segments"]:
         if "words" in segment:
-            for word_data in segment["words"]:
-                print(
-                    f"Word: \"{word_data['word']}\" (Start: {word_data['start']:.2f}s, End: {word_data['end']:.2f}s)"
-                )
-
-                # Obtenemos la information sobre la palabra
-                word = word_data[
-                    "word"
-                ].strip()  # Quitamos los espacios en blanco de la palabra
-                start = word_data["start"]
-                end = word_data["end"]
+            # Para cada palabra en el segmento
+            for word_info in segment["words"]:
+                word = word_info["word"].strip()
+                start = word_info["start"]
+                end = word_info["end"]
                 duration = end - start
 
                 # Creamos el clip de texto a partir de la información
@@ -211,8 +261,22 @@ if __name__ == "__main__":
                     font_name=font_name,
                 )
 
-                # Establecemos la posición, inicio y duración del clip
-                text_clip = text_clip.set_position(font_position)
+                # Set the position, start, and duration of the clip
+                if position_name == "Custom":
+
+                    # The received coordinates are the desired center, we calculate the required top-left position for MoviePy based on the clip's size
+                    text_width_px = text_clip.w
+                    text_height_px = text_clip.h
+                    
+                    # Calculate the top-left coordinates in pixels
+                    top_left_x_px = (video.w * x_pos_center) - (text_width_px / 2)
+                    top_left_y_px = (video.h * y_pos_center) - (text_height_px / 2)
+
+                    text_clip = text_clip.set_position((top_left_x_px, top_left_y_px))
+                else:
+                    # For predefined positions, use the standard string values
+                    text_clip = text_clip.set_position(font_position)
+                
                 text_clip = text_clip.set_start(start)
 
                 # Agregamos este clip a nuestra lista

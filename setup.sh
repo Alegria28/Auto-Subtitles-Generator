@@ -83,5 +83,21 @@ else
     echo "✅ vlc is already installed."
 fi
 
+# Install Microsoft Core Fonts
+echo "📥 Installing Microsoft Core Fonts..."
+if dpkg -s ttf-mscorefonts-installer &> /dev/null; then
+    echo "✅ Microsoft Core Fonts are already installed."
+else
+    echo "🔍 Microsoft Core Fonts not found, installing..."
+    # Enable contrib repository to find the package
+    sudo add-apt-repository contrib -y
+    sudo apt-get update
+    # Pre-accept the EULA license to allow non-interactive installation
+    echo "ttf-mscorefonts-installer msttcorefonts/accepted-mscorefonts-eula select true" | sudo debconf-set-selections
+    # Install the fonts package
+    sudo apt-get install ttf-mscorefonts-installer -y
+    echo "✅ Microsoft Core Fonts installed."
+fi
+
 echo "✅ System ready"
 read -p "Press [Enter] to exit... 👋"

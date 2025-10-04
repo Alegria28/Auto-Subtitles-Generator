@@ -1,5 +1,3 @@
-# cspell:disable
-
 # Importamos los módulos
 import tkinter  # Para trabajar con UI
 import vlc  # Para reproducir el video
@@ -10,6 +8,9 @@ from tkinter import colorchooser
 
 # Del modulo moviepy en el sub-modulo editor, importamos la clase
 from moviepy.editor import VideoFileClip
+
+# We import the class
+from classes.SubtitleASSManager import SubtitleASSManager
 
 # Módulos de la biblioteca estándar
 import sys  # Para poder salir del programa
@@ -92,12 +93,84 @@ if __name__ == "__main__":
     # ------ Estructura de la interfaz ------
 
     # Frame para los controles (derecha)
-    controls_frame = tkinter.Frame(root, width=300, background="lightgrey")
+    controls_frame = tkinter.Frame(root, width=300, background="")
     controls_frame.pack(side=tkinter.RIGHT, fill=tkinter.Y)
     controls_frame.pack_propagate(False)  # Para que no cambie de tamaño el frame
 
+    def update_preview_subtitle():
+        """
+        This function generates the .ass file and tells VLC to load it
+        """
+        
+        # It uses the real video size for accurate positioning and duration
+        video_duration_ms = int(video.duration * 1000)
+        preview_ass_path = ass_manager.generate_ass(
+            text="Preview",
+            video_size=video.size,
+            duration=video_duration_ms,
+        )
+
+        # Load the generated subtitle file into the player
+        # The 'slaves' are secondary files like subtitles
+        player.add_slave(
+            vlc.MediaSlaveType.subtitle, f"file://{preview_ass_path}", True
+        )
+        print(f"🔄 Preview subtitle updated: {preview_ass_path}")
+
+    def on_video_click(event):
+        # We get the size of the frame
+        display_w = video_frame.winfo_width()
+        display_h = video_frame.winfo_height()
+
+        if display_w == 0 or display_h == 0:
+            return
+
+        # We get the size of the video (resolution)
+        video_w, video_h = video.size
+
+        # Scales and offsets
+        scale = min(display_w / video_w, display_h / video_h)
+        rendered_w = video_w * scale
+        rendered_h = video_h * scale
+        offset_x = (display_w - rendered_w) / 2
+        offset_y = (display_h - rendered_h) / 2
+
+        # Coordinates inside the frame (pixels)
+        x_px = event.x
+        y_px = event.y
+
+        # Relative coordinates inside rendered video area
+        x_render = x_px - offset_x
+        y_render = y_px - offset_y
+
+        # Coordinates should not be outside the video
+        x_render = max(0, min(rendered_w, x_render))
+        y_render = max(0, min(rendered_h, y_render))
+
+        # Coordinates conversion to video pixels
+        if rendered_w > 0 and rendered_h > 0:
+            x_video_px = int((x_render / rendered_w) * video_w)
+            y_video_px = int((y_render / rendered_h) * video_h)
+        else:
+            return
+
+        # Status update
+        position_variable.set("Custom")
+
+        # Instance update
+        ass_manager.set_position_norm(x_video_px / video_w, y_video_px / video_h)
+        ass_manager.position_name = "Custom"
+
+        # Update the preview to show the new position
+        update_preview_subtitle()
+
+        print(
+            f"Clicked at px=({x_px},{y_px}), video_px=({x_video_px},{y_video_px}), norm=({x_video_px/video_w:.3f},{y_video_px/video_h:.3f})"
+        )
+
     # Frame para el video (izquierda)
     video_frame = tkinter.Frame(root, background="black")
+    video_frame.bind("<Button-1>", on_video_click)
     video_frame.pack(side=tkinter.LEFT, fill=tkinter.BOTH, expand=True)
 
     # ------ Lógica VLC ------
@@ -173,11 +246,15 @@ if __name__ == "__main__":
         color_code = colorchooser.askcolor(title="Choose a color")
 
         # Si se selecciono un color
-        if color_code:
+        if color_code and color_code[1]:
             # Obtenemos el color hexadecimal elegido
             color_variable.set(color_code[1])
             # Cambiamos el color seleccionado en GUI
             color_display.config(background=color_code[1])
+            # We update our instance
+            ass_manager.color = color_code[1]
+            # Update the preview to show the new color
+            update_preview_subtitle()
 
     def on_select(event):
         # Obtenemos el indice del valor seleccionado
@@ -189,6 +266,10 @@ if __name__ == "__main__":
             index = selected_index[0]
             # Guardamos el valor del indice
             font_variable.set(listbox.get(index))
+            # We update our instance
+            update_font()
+            # Update the preview to show the new font
+            update_preview_subtitle()
 
     # ------ Widgets ------
 
@@ -237,13 +318,38 @@ if __name__ == "__main__":
     # Se posiciona dentro del contenedor
     volume_slider.pack(fill=tkinter.X, pady=(5, 0))
 
-    # --- Variables y widgets de subtítulos
+    # ------ Variables y widgets de subtítulos ------
 
     font_variable = tkinter.StringVar(root, "Arial")
-    size_variable = tkinter.IntVar(root, 30)
+    size_variable = tkinter.IntVar(value=30)
     position_variable = tkinter.StringVar(root, "Bottom")
     color_variable = tkinter.StringVar(root, "#FFFFFF")
     ai_model = tkinter.StringVar(root, "Medium")
+
+    # ------ SubtitleASSManager instance ------
+
+    ass_manager = SubtitleASSManager(
+        font_variable.get(), size_variable.get(), color_variable.get(), player
+    )
+
+    # ------ Nested functions to update SubtitleASSManager instance ------
+
+    def update_size(*args):
+        # This function is called by the trace when size_variable changes
+        ass_manager.size = int(size_variable.get())
+        # Update the preview to show the new size
+        update_preview_subtitle()
+
+    def update_font():
+        ass_manager.font = font_variable.get()
+        # Update the preview to show the new font
+        update_preview_subtitle()
+
+    def on_position_change():
+        # Update the position name in the manager instance
+        ass_manager.position_name = position_variable.get()
+        # Update the preview to show the new position
+        update_preview_subtitle()
 
     # Creamos otra sección de opciones de subtítulos dentro del frame de controles
     subs_lf = tkinter.LabelFrame(
@@ -292,8 +398,8 @@ if __name__ == "__main__":
 
     # Creamos un ListBox
     listbox = tkinter.Listbox(
-        list_frame, height=10, selectmode="single"
-    )  # Solo se puede seleccionar un item
+        list_frame, height=10, selectmode="single"  # Solo se puede seleccionar un item
+    )
 
     # Creamos un scrollbar
     scrollbar = tkinter.Scrollbar(
@@ -324,9 +430,13 @@ if __name__ == "__main__":
     # Tamaño
     tkinter.Label(subs_lf, text="Size:", bg="lightgrey").pack(anchor="w", pady=(10, 0))
     # Creamos un SpinBox que es un campo de entrada de números con flechas, diciéndole que va a estar dentro
-    # de la sección, con un rango de valores y vinculando el valor con la variable anteriormente creada
+    # de la sección, con un rango de valores y vinculando el valor con la variable anteriormente creada, ademas llamando
+    # a la funcion update_size() cada vez que se cambia el valor
     size_spinbox = tkinter.Spinbox(
-        subs_lf, from_=10, to=100, textvariable=size_variable
+        subs_lf,
+        from_=0,
+        to=1000,
+        textvariable=size_variable,
     )
     size_spinbox.pack(fill=tkinter.X)
 
@@ -352,7 +462,7 @@ if __name__ == "__main__":
         anchor="w", pady=(10, 0)
     )
     # Lista de python para almacenar las opciones
-    positions = ["Top", "Middle", "Bottom"]
+    positions = ["Top", "Middle", "Bottom", "Custom"]
     # Recorremos la lista
     for pos in positions:
         # Se crea un radio button para cada una de las opciones
@@ -363,6 +473,7 @@ if __name__ == "__main__":
             value=pos,
             bg="lightgrey",
             activebackground="lightgrey",
+            command=on_position_change, 
         )
         rb.pack(anchor="w")
 
@@ -389,6 +500,11 @@ if __name__ == "__main__":
             ),
             "video_name": os.path.splitext(os.path.basename(host_video_path)),
         }
+
+        # If the position is custom, add the normalized coordinates to the dictionary
+        if dictionary["position"] == "Custom":
+            dictionary["x_pos"] = ass_manager.x
+            dictionary["y_pos"] = ass_manager.y
 
         # A partir del diccionario, lo convertimos en JSON
         json_format = json.dumps(dictionary, indent=4)  # Para que sea mas fácil leerlo
@@ -447,7 +563,14 @@ if __name__ == "__main__":
     # Modelo de IA
     tkinter.Label(settings_lf, text="AI Model:", bg="lightgrey").pack(anchor="w")
     # Lista de python con los modelos disponibles
-    ai_models = ["Tiny", "Base", "Small", "Medium", "Large", "Turbo"]
+    ai_models = [
+        "Tiny",
+        "Base",
+        "Small",
+        "Medium",
+        "Large",
+    ]
+
     # Se crea un menu dentro de la nueva sección, vinculando la variable fontVariable y desempaquetando
     # la lista al momento de pasarlo como parámetro
     ai_menu = tkinter.OptionMenu(settings_lf, ai_model, *ai_models)
@@ -506,6 +629,11 @@ if __name__ == "__main__":
     # Para asegurarnos que la ventana este lista antes de reproducir, le mandamos el objeto de
     # reproducirVideo para que este pueda ejecutarlo mas tarde (1ms mas tarde) cuando se inicie el main loop
     root.after(1, play_video)
+    # Generate the initial preview subtitle when the app starts
+    root.after(0, update_preview_subtitle)
+
+    # Add the trace of our variable after the 'video' object has been created and just before the main loop starts.
+    size_variable.trace_add("write", update_size)
 
     # Iniciamos el loop principal de la ventana
     root.mainloop()

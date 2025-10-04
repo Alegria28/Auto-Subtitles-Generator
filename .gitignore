@@ -15,6 +15,9 @@ TUTOR.md
 __pycache__/
 *.pyc
 
+# Los subtítulos generados
+*.ass
+
 # Los .mp4 y .mp3
 *.mp4
 *.mp3
