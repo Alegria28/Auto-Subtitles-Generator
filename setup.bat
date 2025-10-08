@@ -12,7 +12,7 @@ echo [1/5] Checking for Docker...
 docker --version >nul 2>&1
 if %errorlevel% neq 0 (
     echo   [X] Error: Docker is not installed or the Docker daemon is not running.
-    echo   Please install Docker Desktop for Windows and ensure it's running before executing this script again.
+    echo   Please install Docker Desktop and ensure it's running.
     echo   Download from: https://www.docker.com/products/docker-desktop/
     goto :error
 ) else (
@@ -20,25 +20,30 @@ if %errorlevel% neq 0 (
 )
 echo.
 
-:: 2. Check for Python
-echo [2/5] Checking for Python...
-:: Use the 'py' launcher, which is standard on Windows
-py -3.12 --version >nul 2>&1
+:: 2. Check for Python 3.12+ (Robust Method)
+echo [2/5] Checking for Python 3.12 or newer...
+python --version >nul 2>&1
 if %errorlevel% neq 0 (
-    echo   [X] Error: Python 3.12+ is not installed or not accessible.
-    echo   Please install it from python.org (make sure to check "Add Python to PATH" during installation).
-    echo   Download from: https://www.python.org/downloads/
-    goto :error
+    echo   [X] Error: Python is not installed or not found in PATH.
+    goto :python_error
+)
+
+:: Directly check the output of python --version for required versions
+python --version 2>&1 | findstr /C:" 3.12" /C:" 3.13" /C:" 3.14" /C:" 3.15" >nul
+if %errorlevel% neq 0 (
+    echo   [X] Error: Python version 3.12 or newer is required.
+    echo   Please run 'python --version' to see your current version.
+    goto :python_error
 ) else (
-    echo   [+] Python 3.12+ is installed.
+    echo   [+] Compatible Python version found.
 )
 echo.
 
-:: 3. Create and activate virtual environment using virtualenv
-echo [3/5] Setting up Python virtual environment...
 
+:: 3. Set up virtual environment using virtualenv
+echo [3/5] Setting up Python virtual environment...
 :: Check if virtualenv is installed, and install it if not
-virtualenv --version >nul 2>&1
+pip install virtualenv >nul
 if %errorlevel% neq 0 (
     echo   [-] 'virtualenv' package not found. Installing it now...
     py -m pip install virtualenv
@@ -80,7 +85,7 @@ echo [4/5] Installing Python packages...
 python -c "import tkinter" >nul 2>&1
 if %errorlevel% neq 0 (
     echo   [X] Error: Tkinter module not found.
-    echo   Please reinstall Python and make sure to include "tcl/tk and IDLE" during the installation process.
+    echo   Please reinstall Python and make sure to include "tcl/tk and IDLE".
     goto :error
 ) else (
     echo   [+] Tkinter module is available.
@@ -99,7 +104,6 @@ echo.
 
 :: 5. Check for VLC
 echo [5/5] Checking for VLC Media Player...
-:: It's difficult to programmatically check for VLC, so we just notify the user.
 echo   [!] IMPORTANT: This script cannot automatically verify if VLC is installed.
 echo   Please ensure you have VLC Media Player on your system for the video player to work.
 echo   Download from: https://www.videolan.org/
@@ -113,6 +117,11 @@ echo The virtual environment is active in this terminal.
 echo To run the application, execute: python main.py
 echo.
 goto :end
+
+:python_error
+echo   Please install Python 3.12+ from python.org.
+echo   IMPORTANT: During installation, make sure to check the box "Add python.exe to PATH".
+goto :error
 
 :error
 echo.

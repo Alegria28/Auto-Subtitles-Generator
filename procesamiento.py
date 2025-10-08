@@ -138,7 +138,7 @@ if __name__ == "__main__":
     # --- Lectura de Json ---
 
     # Leemos el archivo JSON para obtener las características del video
-    with open(os.path.join(SHARED_FOLDER_PATH, JSON_NAME), "r") as f:
+    with open(os.path.join(SHARED_FOLDER_PATH, JSON_NAME), "r", encoding='utf-8') as f:
         features_json = json.load(f)
 
     # Obtenemos los valores con los que vamos a trabajar
