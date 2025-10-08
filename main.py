@@ -18,12 +18,9 @@ import os  # Para trabajar con rutas
 import shutil  # Para copiar archivos
 import json  # Para trabajar con archivos JSON
 import subprocess  # Para ejecutar comandos en terminal
-import threading # Para ejecutar el proceso en un hilo separado
 
 # ------ Constantes ------
 FOLDER_NAME = "sharedFolder"
-VIDEO_TXT_NAME = "pathVideo.txt"
-AUDIO_TXT_NAME = "pathAudio.txt"
 JSON_NAME = "videoFeatures.json"
 
 # Obtenemos la ruta absoluta de la carpeta donde está este archivo (main.py).
@@ -531,87 +528,43 @@ if __name__ == "__main__":
         with open(file=os.path.join(FOLDER_NAME, JSON_NAME), mode="w") as f:
             f.write(json_format)
 
-        # Detenemos el reproductor y ocultamos la ventana principal en lugar de destruirla
-        player.stop()
-        root.withdraw()
 
-        # Comando base para Docker. Es el mismo para todos los sistemas operativos.
-        command = [
-            "docker", "build", "-f", "Dockerfile", "-t", "auto-subtitles-generator", ".",
-            "&&",
-            "docker", "image", "prune", "-f",
-            "&&",
-            "docker", "run", "--rm", "-it",
-            "-v", f"{SHARED_FOLDER_PATH}:/autoSubtitlesGenerator/{FOLDER_NAME}",
-            "-v", f"{CACHE_PATH}:/root/.cache",
-            "auto-subtitles-generator"
-        ]
+        full_command = f"""
+        echo '--- Starting subtitle generation process in Docker ---' && \\
+        docker build -f Dockerfile -t auto-subtitles-generator . && \\
+        docker image prune -f && \\
+        echo '--- Creating container to generate subtitles ---' && \\
+        docker run --rm -it \\
+        -v "{SHARED_FOLDER_PATH}:/autoSubtitlesGenerator/{FOLDER_NAME}" \\
+        -v "{CACHE_PATH}:/root/.cache" \\
+        auto-subtitles-generator && \\
+        echo '--- Process finished, the video with subtitles is in the folder: {FOLDER_NAME} ---' && \\
+        echo '--- You can close this terminal ---' && \\
+        exec bash
+        """
 
-        # En Windows, 'subprocess' necesita una cadena para comandos con '&&'
+        # If we're running windows
         if sys.platform.startswith("win32"):
-            command_str = " ".join(command)
-        else: # En Linux, es mejor una lista de argumentos para 'shell=False'
-            command_str = " ".join(command) # Usar shell=True es más simple aquí
+            # Update command for it to be able to run in windows
+            win_command = full_command.replace("&& \\", "&").replace("exec bash", "pause")
+            # Open terminal
+            subprocess.Popen(f'cmd /K "{win_command}"', shell=True)
+        # Linux and other OS
+        else: 
+            # Open terminal using gnome-terminal
+            subprocess.Popen(
+                [
+                    "gnome-terminal",
+                    "--maximize",
+                    "--",
+                    "bash",
+                    "-c",
+                    full_command,
+                ]
+            )
 
-        # Función que se ejecutará en un hilo para no bloquear la GUI
-        def run_process_in_thread(command, text_widget, progress_window):
-            try:
-                # Inicia el proceso
-                process = subprocess.Popen(
-                    command,
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.STDOUT,
-                    text=True,
-                    shell=True, # shell=True es necesario para procesar '&&'
-                    bufsize=1,
-                    universal_newlines=True
-                )
-
-                # Lee la salida línea por línea en tiempo real
-                for line in process.stdout:
-                    text_widget.insert(tkinter.END, line)
-                    text_widget.see(tkinter.END) # Auto-scroll
-                
-                process.wait() # Espera a que el proceso termine
-                
-                text_widget.insert(tkinter.END, "\n\n--- ✅ Process finished ---")
-                text_widget.insert(tkinter.END, f"\n--- The video with subtitles is in the folder: {FOLDER_NAME} ---")
-                text_widget.insert(tkinter.END, "\n--- You can close this window. ---")
-                text_widget.see(tkinter.END)
-
-            except Exception as e:
-                text_widget.insert(tkinter.END, f"\n\n--- ❌ An error occurred ---\n{e}")
-                text_widget.see(tkinter.END)
-            
-            # Habilitar el botón de cierre cuando el proceso termina (o falla)
-            progress_window.protocol("WM_DELETE_WINDOW", progress_window.destroy)
-
-
-        # Crear la nueva ventana para mostrar la salida como un Toplevel
-        progress_window = tkinter.Toplevel(root)
-        progress_window.title("Generating Subtitles...")
-        progress_window.geometry("800x600")
-
-        # Deshabilitar el cierre de la ventana mientras el proceso se ejecuta
-        progress_window.protocol("WM_DELETE_WINDOW", lambda: None) 
-
-        # Crear un widget de texto con una barra de desplazamiento
-        text_frame = tkinter.Frame(progress_window)
-        text_frame.pack(expand=True, fill='both', padx=10, pady=10)
-        
-        output_text = tkinter.Text(text_frame, wrap='word', bg='black', fg='white', font=("Courier New", 10))
-        scrollbar = tkinter.Scrollbar(text_frame, command=output_text.yview)
-        output_text['yscrollcommand'] = scrollbar.set
-        
-        scrollbar.pack(side='right', fill='y')
-        output_text.pack(side='left', expand=True, fill='both')
-
-        # Iniciar el proceso en un hilo separado
-        thread = threading.Thread(target=run_process_in_thread, args=(command_str, output_text, progress_window))
-        thread.start()
-
-        # No se necesita progress_window.mainloop() cuando se usa Toplevel
-
+        # Destroy main GUI window
+        root.destroy()
 
     generate_button = tkinter.Button(
         controls_frame,

@@ -34,17 +34,40 @@ if %errorlevel% neq 0 (
 )
 echo.
 
-:: 3. Create and activate virtual environment
+:: 3. Create and activate virtual environment using virtualenv
 echo [3/5] Setting up Python virtual environment...
-if not exist venv (
-    echo   [-] Creating virtual environment in 'venv' folder...
-    py -m venv venv
+
+:: Check if virtualenv is installed, and install it if not
+virtualenv --version >nul 2>&1
+if %errorlevel% neq 0 (
+    echo   [-] 'virtualenv' package not found. Installing it now...
+    py -m pip install virtualenv
     if %errorlevel% neq 0 (
-        echo   [X] Failed to create virtual environment.
+        echo   [X] Failed to install 'virtualenv'. Please check your pip configuration.
         goto :error
     )
 ) else (
-    echo   [+] Virtual environment already exists.
+    echo   [+] 'virtualenv' package is already installed.
+)
+
+if not exist venv (
+    echo   [-] Creating virtual environment in 'venv' folder using virtualenv...
+    virtualenv venv
+    if %errorlevel% neq 0 (
+        echo   [X] The command to create the virtual environment failed.
+        goto :error
+    )
+) else (
+    echo   [+] Virtual environment folder already exists.
+)
+
+:: Verify that the virtual environment was created correctly
+if not exist venv\Scripts\activate.bat (
+    echo   [X] CRITICAL ERROR: The virtual environment was not created correctly.
+    echo   The 'venv\Scripts\activate.bat' file is missing.
+    echo   This usually indicates a problem with the Python installation or virtualenv.
+    echo   Please try reinstalling Python, ensuring all standard features are included.
+    goto :error
 )
 
 echo   [-] Activating virtual environment...
