@@ -28,3 +28,6 @@ __pycache__/
 
 # Carpeta de módulos
 node_modules
+
+# Instrucciones la IA
+GEMINI.md
