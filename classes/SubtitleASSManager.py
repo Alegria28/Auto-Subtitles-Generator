@@ -10,10 +10,10 @@ class SubtitleASSManager:
 
     # Constructor
     def __init__(self, font, size, color, player):
-        self._font = font
-        self._size = size
-        self._color = color
-        self._player = player
+        self.font = font
+        self.size = size
+        self.color = color
+        self.player = player
         self.position_name = "Bottom"  # Default position
 
     # ------ Methods ------
@@ -48,9 +48,9 @@ class SubtitleASSManager:
 
         # Define the main style for the subtitles.
         style = pysubs2.SSAStyle()
-        style.fontname = self._font
-        style.fontsize = self._size
-        style.primarycolor = self.hex_to_ass_color(self._color)
+        style.fontname = self.font
+        style.fontsize = self.size
+        style.primarycolor = self.hex_to_ass_color(self.color)
 
         # If the position is 'Custom', set alignment to Middle-Center (5) to match the final video
         if self.position_name == "Custom":
@@ -82,40 +82,6 @@ class SubtitleASSManager:
         subs.save(out_path, encoding="utf-8")
 
         return out_path
-
-    # ------ Getters and setters of the class ------
-
-    @property
-    def font(self):
-        return self._font
-
-    @font.setter
-    def font(self, value):
-        self._font = value
-
-    @property
-    def size(self):
-        return self._size
-
-    @size.setter
-    def size(self, value):
-        self._size = value
-
-    @property
-    def color(self):
-        return self._color
-
-    @color.setter
-    def color(self, value):
-        self._color = value
-
-    @property
-    def player(self):
-        return self._player
-
-    @player.setter
-    def player(self, value):
-        self._player = value
 
     # What we'll show when we print an object
     def __str__(self):
