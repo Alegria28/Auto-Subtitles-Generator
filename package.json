@@ -1,0 +1,24 @@
+{
+  "name": "auto-subtitles-generator",
+  "version": "1.0.0",
+  "description": "This project is a desktop tool to automatically generate subtitles for a video file and then burn them into it. It uses `openai-whisper` for audio-to-text transcription, `MoviePy` for video manipulation, and `Tkinter` with `python-vlc` for the graphical interface. 🎥",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Alegria28/Auto-Subtitles-Generator.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/Alegria28/Auto-Subtitles-Generator/issues"
+  },
+  "homepage": "https://github.com/Alegria28/Auto-Subtitles-Generator#readme",
+  "dependencies": {
+    "@google/gemini-cli": "^0.9.0"
+  }
+}
