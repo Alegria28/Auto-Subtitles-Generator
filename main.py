@@ -90,6 +90,9 @@ if __name__ == "__main__":
     # LLamamos a la función para centrar nuestra ventana
     center_screen(root=root)
 
+    # Make the window non-resizable
+    root.resizable(False, False)
+
     # ------ Estructura de la interfaz ------
 
     # Frame para los controles (derecha)
